@@ -286,34 +286,42 @@ def break_graph(dual_graph_input,shp_path):
     # 1. Break at intersections
     shp = QgsVectorLayer(shp_path, "network", 'ogr')
 
+    # create spatial index for features in line layer
+    provider = shp.dataProvider()
+    spIndex = QgsSpatialIndex()  # create spatial index object
+    feat = QgsFeature()
+    fit = provider.getFeatures()  # gets all features in layer
+    # insert features to index
+    while fit.nextFeature(feat):
+        spIndex.insertFeature(feat)
+
+    # find four nearest lines to a point
+    p_to_lines = {}  # { point_id: lines intersecting}
+    for i in shp.getFeatures():
+        nearestIds = spIndex.intersects(QgsPoint(i.geometry().asPoint()), 1)
+        p_to_lines[i.id()] = nearestIds
+
+
     Break_pairs = []
 
-    for f in shp.getFeatures():
-        f_geom_Pl = f.geometry().asPolyline()
-        f_geom = f.geometry()
-        f_endpoints = [f_geom_Pl[0], f_geom_Pl[-1]]
-        f_id = f.attribute('zid')
-        for g in Foreground.getFeatures():
-            g_id = g.attribute('zid')
-            if f_id == g_id:
-                pass
-            else:
-                g_geom = g.geometry()
-                if f_geom.intersects(g_geom):
-                    Intersection = f_geom.intersection(g_geom)
-                    if Intersection.wkbType() == 4:
-                        for i in Intersection.asMultiPoint():
-                            if i not in f_endpoints:
-                                if i in f.geometry().asPolyline():
-                                    index = f.geometry().asPolyline().index(i)
-                                    break_pair = [f_id, index]
-                                    Break_pairs.append(break_pair)
-                    elif Intersection.wkbType() == 1:
-                        if Intersection.asPoint() not in f_endpoints:
-                            if Intersection.asPoint() in f.geometry().asPolyline():
-                                index = f.geometry().asPolyline().index(Intersection.asPoint())
+    for k,v in p_to_lines.items():
+        for inter in v.items():
+
+            if f_geom.intersects(g_geom):
+                Intersection = f_geom.intersection(g_geom)
+                if Intersection.wkbType() == 4:
+                    for i in Intersection.asMultiPoint():
+                        if i not in f_endpoints:
+                            if i in f.geometry().asPolyline():
+                                index = f.geometry().asPolyline().index(i)
                                 break_pair = [f_id, index]
                                 Break_pairs.append(break_pair)
+                elif Intersection.wkbType() == 1:
+                    if Intersection.asPoint() not in f_endpoints:
+                        if Intersection.asPoint() in f.geometry().asPolyline():
+                            index = f.geometry().asPolyline().index(Intersection.asPoint())
+                            break_pair = [f_id, index]
+                            Break_pairs.append(break_pair)
 
 
     # make unique groups
@@ -353,6 +361,11 @@ def break_graph(dual_graph_input,shp_path):
                 Break_pairs_new[k].append([before, j])
 
     id = int(Foreground.featureCount())
+
+
+
+
+
 
     for k, v in Break_pairs_new.items():
         Foreground.select(k)
