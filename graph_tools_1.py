@@ -3,6 +3,7 @@ from networkx import connected_components
 import itertools
 import processing
 from decimal import *
+import math
 
 # make iterator
 
@@ -10,10 +11,6 @@ from decimal import *
 def make_iter(my_list):
     for i in range(0,len(my_list-1)):
         yield my_list[i]
-
-
-# convert shapefile to graph
-# you may need to explode the network first
 
 
 snap_threshold = 0.0001
@@ -179,10 +176,12 @@ def graphs_intersection(dual_graph_1, dual_graph_2):
     return lines_inter
 
 
-def merge_graph(dual_graph_input):
+def merge_graph(dual_graph_input,shp_path):
     # 2. merge lines from intersection to intersection
     # Is there a grass function for QGIS 2.14???
     # sets of connected nodes (edges of primary graph)
+    shp = QgsVectorLayer(shp_path, "network", 'ogr')
+    attr_dict = {i.id(): i.attributes() for i in shp.getFeatures()}
     sets = []
     for j in connected_components(dual_graph_input):
         sets.append(list(j))
@@ -195,7 +194,7 @@ def merge_graph(dual_graph_input):
                     edges.append(n)
                     # find all shortest paths and keep longest between edges
             if len(edges) == 0:
-                edges = [set[0],set[0]]
+                edges = [set[0], set[0]]
             list_paths = [i for i in nx.all_simple_paths(dual_graph_input, edges[0], edges[1])]
             if len(list_paths) == 1:
                 set_in_order = list_paths[0]
@@ -203,8 +202,28 @@ def merge_graph(dual_graph_input):
                 set_in_order = max(enumerate(list_paths), key=lambda tup: len(tup[1]))[1]
                 del set_in_order[-1]
             sets_in_order.append(set_in_order)
+
+    # TO DO: alter dual graph
+    dual_graph_output = nx.MultiGraph(dual_graph_input)
+    for j in sets_in_order:
+        if len(j) > 1:
+            new_node = attr_dict[set[0]][8]
+            all_neighbors = []
+            for node in j:
+                for neigh in dual_graph_input.neighbors(node):
+                    all_neighbors.append(neigh)
+                if node != j[0] and dual_graph_output.has_node(node):
+                    dual_graph_output.remove_node(node)
+            all_neighbors_unique = []
+            for x in all_neighbors:
+                if x not in all_neighbors_unique and x not in j:
+                    all_neighbors_unique.append(x)
+            new_edges = [(new_node, x) for x in all_neighbors_unique]
+            dual_graph_output.add_edges_from(new_edges)
+
+
     # merge segments based on sequence of ids plus two endpoints - combine geometries (new_seq_ids)
-    return sets_in_order
+    return sets_in_order, dual_graph_output
 
 # TO DO: not random generation of new attributes
 
@@ -240,7 +259,7 @@ def merge_geometries(sets_in_order, shp_path):
                     geom_to_merge[(ind + 1) % len(geom_to_merge)] = new_geom
         merged_geoms.append([new_geom, new_attr])
     crs = shp.crs()
-    merged_network = QgsVectorLayer('LineString?crs=' + crs.toWkt(), "temporary_network", "memory")
+    merged_network = QgsVectorLayer('LineString?crs=' + crs.toWkt(), "merged_network", "memory")
     QgsMapLayerRegistry.instance().addMapLayer(merged_network)
     merged_network.dataProvider().addAttributes([y for y in shp.dataProvider().fields()])
     merged_network.updateFields()
@@ -281,132 +300,92 @@ def break_multiparts(shp):
     shp.removeSelection()
 
 
-def break_graph(dual_graph_input,shp_path):
+def break_graph(dual_graph_output, merged_network):
     # TO DO:
     # 1. Break at intersections
-    shp = QgsVectorLayer(shp_path, "network", 'ogr')
-
     # create spatial index for features in line layer
-    provider = shp.dataProvider()
+    provider = merged_network.dataProvider()
     spIndex = QgsSpatialIndex()  # create spatial index object
     feat = QgsFeature()
     fit = provider.getFeatures()  # gets all features in layer
     # insert features to index
     while fit.nextFeature(feat):
         spIndex.insertFeature(feat)
+    # find lines intersecting other lines
+    inter_lines = {i.id(): spIndex.intersects(QgsRectangle(QgsPoint(i.geometry().asPolyline()[0]), QgsPoint(i.geometry().asPolyline()[-1]))) for i in merged_network.getFeatures()}
 
-    # find four nearest lines to a point
-    p_to_lines = {}  # { point_id: lines intersecting}
-    for i in shp.getFeatures():
-        nearestIds = spIndex.intersects(QgsPoint(i.geometry().asPoint()), 1)
-        p_to_lines[i.id()] = nearestIds
-
-
-    Break_pairs = []
-
-    for k,v in p_to_lines.items():
-        for inter in v.items():
-
-            if f_geom.intersects(g_geom):
-                Intersection = f_geom.intersection(g_geom)
-                if Intersection.wkbType() == 4:
-                    for i in Intersection.asMultiPoint():
-                        if i not in f_endpoints:
-                            if i in f.geometry().asPolyline():
-                                index = f.geometry().asPolyline().index(i)
-                                break_pair = [f_id, index]
-                                Break_pairs.append(break_pair)
-                elif Intersection.wkbType() == 1:
-                    if Intersection.asPoint() not in f_endpoints:
-                        if Intersection.asPoint() in f.geometry().asPolyline():
-                            index = f.geometry().asPolyline().index(Intersection.asPoint())
-                            break_pair = [f_id, index]
-                            Break_pairs.append(break_pair)
-
-
-    # make unique groups
-    Break_pairs_unique = {}
-    for i in Break_pairs:
-        if i[0] not in Break_pairs_unique.keys():
-            Break_pairs_unique[i[0]] = [i[1]]
-        else:
-            Break_pairs_unique[i[0]].append(i[1])
-
-    for k, v in Break_pairs_unique.items():
-        Foreground.select(k)
-        f = Foreground.selectedFeatures()[0]
-        Foreground.deselect(k)
-        v.append(0)
-        v.append(len(f.geometry().asPolyline()) - 1)
-
-    for k, v in Break_pairs_unique.items():
-        v.sort()
-
-    # remove duplicates
-    Break_pairs = {}
-    for k, v in Break_pairs_unique.items():
-        Break_pairs[k] = []
+    intersections = []
+    for k, v in inter_lines.items():
         for i in v:
-            if i not in Break_pairs[k] and i != 0:
-                Break_pairs[k].append(i)
+            intersections.append([i,k])
 
-    Break_pairs_new = {}
-    for k, v in Break_pairs.items():
-        Break_pairs_new[k] = []
-        for i, j in enumerate(v):
-            if i == 0:
-                Break_pairs_new[k].append([0, j])
-            else:
-                before = v[(i - 1) % len(v)]
-                Break_pairs_new[k].append([before, j])
+    for i in intersections:
+        if i[1] not in inter_lines[i[0]]:
+            inter_lines[i[0]].append(i[1])
 
-    id = int(Foreground.featureCount())
+    # find nodes of dual graph connected to other nodes
+    con_nodes = {k: v.keys() for k, v in dual_graph_output.adjacency_iter()}
+    for k, v in con_nodes.items():
+        for item in v:
+            inter_lines[k].remove(item)
 
+    for k, v in inter_lines.items():
+        if k in con_nodes.keys():
+            if k not in con_nodes[k]:
+                v.remove(k)
 
-
-
-
-
-    for k, v in Break_pairs_new.items():
-        Foreground.select(k)
-        f = Foreground.selectedFeatures()[0]
-        Foreground.deselect(k)
-        f_geom = f.geometry()
-        Ind_D = {}
-        for i, p in enumerate(f_geom.asPolyline()):
-            Ind_D[i] = p
-        for j in v:
-            new_feat = QgsFeature()
-            attr=f.attributes()
-            id += 1
-            new_ind_list = range(j[0], j[1] + 1, 1)
-            new_vert_list = []
-            for x in new_ind_list:
-                #this is a point object
-                p = Ind_D[x]
-                new_vert_list.append(QgsGeometry().fromPoint(p))
-            final_list = []
-            for y in new_vert_list:
-                final_list.append(y.asPoint())
-            new_geom = QgsGeometry().fromPolyline(final_list)
-            #new_geom.isGeosValid()
-            #print "new_geom" , new_geom
-            new_feat.setAttributes(attr)
-            new_feat.setGeometry(new_geom)
-            Foreground.startEditing()
-            Foreground.addFeature(new_feat, True)
-            Foreground.commitChanges()
-
-    self.iface.mapCanvas().refresh()
-
-    for k, v in Break_pairs_new.items():
-        Foreground.select(k)
-        #f = Foreground.selectedFeatures()[0]
-        Foreground.deselect(k)
-        Foreground.startEditing()
-        Foreground.deleteFeature(k)
-        Foreground.commitChanges()
-
-    QgsMapLayerRegistry.instance().removeMapLayer(Foreground_original.name())
+    return inter_lines
 
 
+def break_geometries(inter_lines, merged_network):
+
+    geom_dict_indices = {i.id(): i.geometry().asPolyline() for i in merged_network.getFeatures()}
+    inter_lines_to_break = {k: v for k, v in inter_lines.items() if len(v) != 0}
+    inter_lines_to_copy = [k for k, v in inter_lines.items() if len(v) == 0]
+    lines_ind_to_break = {}
+
+    for k, v in inter_lines_to_break.items():
+        # add the number of indices that a line is going to break
+        # add index 0 and index -1 and sort
+        break_indices = []
+        for item in v:
+            inter_points = set(geom_dict_indices[k]).intersection(geom_dict_indices[item])
+            for point in inter_points:
+                break_indices.append(geom_dict_indices[k].index(point))
+        break_indices.append(0)
+        break_indices.append(len(geom_dict_indices[k])-1)
+        break_indices_unique = list(set(break_indices))
+        break_indices_unique.sort()
+        lines_ind_to_break[k] = break_indices_unique
+
+    for i in inter_lines_to_copy:
+        break_indices = []
+        break_indices.append(0)
+        break_indices.append(len(geom_dict_indices[k]) - 1)
+        lines_ind_to_break[k] = break_indices
+
+    new_broken_feat = []
+    attr_dict = {i.id(): i.attributes() for i in merged_network.getFeatures()}
+
+    for k, v in lines_ind_to_break.items():
+        for ind, index in enumerate(v):
+            if len(v) > 0 and ind != len(v)-1:
+                points = []
+                for i in range(index, v[ind+1]+1):
+                    points.append(QgsGeometry.fromPoint(geom_dict_indices[k][i]).asPoint())
+                new_geom = QgsGeometry().fromPolyline(points)
+                new_feat = QgsFeature()
+                new_feat.setGeometry(new_geom)
+                new_feat.setAttributes(attr_dict[k])
+                new_broken_feat.append(new_feat)
+
+    crs = merged_network.crs()
+    broken_network = QgsVectorLayer('LineString?crs=' + crs.toWkt(), "broken_network", "memory")
+    QgsMapLayerRegistry.instance().addMapLayer(broken_network)
+    broken_network.dataProvider().addAttributes([y for y in merged_network.dataProvider().fields()])
+    broken_network.updateFields()
+    broken_network.startEditing()
+    broken_network.addFeatures(new_broken_feat)
+    broken_network.commitChanges()
+    broken_network.removeSelection()
+    return broken_network, lines_ind_to_break
