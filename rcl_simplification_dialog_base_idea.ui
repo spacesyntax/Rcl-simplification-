@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>314</width>
+    <width>319</width>
     <height>537</height>
    </rect>
   </property>
@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>MergeLines</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>14</x>
@@ -32,7 +32,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -199,6 +199,13 @@
          </layout>
         </item>
         <item>
+         <widget class="Line" name="line_17">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QProgressBar" name="progressBar">
           <property name="value">
            <number>24</number>
@@ -222,49 +229,22 @@
          </widget>
         </item>
        </layout>
-       <zorder>label_22</zorder>
-       <zorder>layoutWidget_5</zorder>
-       <zorder>progress_bar_8</zorder>
-       <zorder>label_2</zorder>
-       <zorder>choose_input_layer_3</zorder>
-       <zorder>label_21</zorder>
-       <zorder>save_output_3</zorder>
-       <zorder>progress_bar_7</zorder>
-       <zorder>layoutWidget_6</zorder>
-       <zorder>analysis_10</zorder>
-       <zorder>label_6</zorder>
-       <zorder>path_output_3</zorder>
-       <zorder>angle_threshold_5</zorder>
-       <zorder>angle_threshold_2</zorder>
-       <zorder>analysis_8</zorder>
        <zorder>label</zorder>
        <zorder>choose_input_layer</zorder>
-       <zorder>layoutWidget_6</zorder>
-       <zorder>layoutWidget_7</zorder>
        <zorder>label_5</zorder>
        <zorder>line_2</zorder>
        <zorder>line</zorder>
-       <zorder>layoutWidget_10</zorder>
-       <zorder>layoutWidget_11</zorder>
        <zorder>label_3</zorder>
        <zorder>progressBar</zorder>
        <zorder>analysis_9</zorder>
        <zorder>checkBox_4</zorder>
-       <zorder>layoutWidget</zorder>
-       <zorder>layoutWidget_2</zorder>
+       <zorder>line_17</zorder>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
         <string>Intersections</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="Line" name="line_16">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QLabel" name="label_35">
           <property name="text">
@@ -327,6 +307,27 @@
          </widget>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_48">
+            <property name="text">
+             <string>intersection distance</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="angle_threshold_18">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_6">
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_20">
@@ -376,20 +377,6 @@
              </layout>
             </item>
            </layout>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <item>
-           <widget class="QLabel" name="label_39">
-            <property name="text">
-             <string>distance </string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDoubleSpinBox" name="length_threshold_12"/>
           </item>
          </layout>
         </item>
