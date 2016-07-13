@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>319</width>
-    <height>537</height>
+    <width>261</width>
+    <height>418</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -24,15 +24,15 @@
     <rect>
      <x>14</x>
      <y>12</y>
-     <width>285</width>
-     <height>510</height>
+     <width>242</width>
+     <height>392</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -206,25 +206,19 @@
          </widget>
         </item>
         <item>
-         <widget class="QProgressBar" name="progressBar">
-          <property name="value">
-           <number>24</number>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QPushButton" name="analysis_9">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>20</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
           <property name="layoutDirection">
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="text">
            <string>Run</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="progressBar">
+          <property name="value">
+           <number>24</number>
           </property>
          </widget>
         </item>
@@ -236,9 +230,9 @@
        <zorder>line</zorder>
        <zorder>label_3</zorder>
        <zorder>progressBar</zorder>
-       <zorder>analysis_9</zorder>
        <zorder>checkBox_4</zorder>
        <zorder>line_17</zorder>
+       <zorder>analysis_9</zorder>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -416,25 +410,19 @@
          </widget>
         </item>
         <item>
-         <widget class="QProgressBar" name="progressBar_2">
-          <property name="value">
-           <number>24</number>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QPushButton" name="analysis_11">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>20</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
           <property name="layoutDirection">
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="text">
            <string>Run</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="progressBar_2">
+          <property name="value">
+           <number>24</number>
           </property>
          </widget>
         </item>
