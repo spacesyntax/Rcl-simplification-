@@ -6,6 +6,79 @@ from qgis.core import *
 import itertools
 import csv
 
+# construct graph
+# snap graph
+
+# save points - nodes in a temporary shp
+
+shp_to_graph
+snap_graph
+
+# get list of nodes of coordinates of the graph
+
+
+def get_nodes_coord(graph):
+    list_coords = []
+    for i in graph.nodes():
+        list_coords.append(i)
+
+    return list_coords
+
+
+
+def make_points_from_shp(shp_original,list_coords ):
+    network = QgsVectorLayer (shp_original, "original_network", "ogr")
+    crs = network.crs()
+    points = QgsVectorLayer('Point?crs=' + crs.toWkt(), "temporary_points", "memory")
+    QgsMapLayerRegistry.instance().addMapLayer(points)
+    pr = points.dataProvider()
+    points.startEditing()
+    pr.addAttributes([QgsField("fid", QVariant.Int),
+                      QgsField("x", QVariant.Double),
+                      QgsField("y", QVariant.Double)])
+    points.commitChanges()
+
+    id = int(-1)
+    features = []
+    for i in list_coords:
+        feat = QgsFeature()
+        p = QgsPoint(i[0], i[1])
+        feat.setGeometry(QgsGeometry().fromPoint(p))
+        feat.setAttributes([id, i[0], i[1]])
+        features.append(feat)
+        id += int(1)
+
+    points.startEditing()
+    pr.addFeatures(features)
+    points.commitChanges()
+
+    return points
+
+
+# use spatial index to find n closest neighbours of a point
+
+
+def find_closest_points(points):
+    provider = points.dataProvider()
+    spIndex = QgsSpatialIndex()  # create spatial index object
+    feat = QgsFeature()
+    fit = provider.getFeatures()  # gets all features in layer
+    # insert features to index
+    while fit.nextFeature(feat):
+        spIndex.insertFeature(feat)
+    # find lines intersecting other lines
+    neighboring_points = {i.id(): spIndex.nearestNeighbor(QgsPoint(i.geometry().asPoint()), 10) for i in points.getFeatures()}
+
+
+# compare with connected nodes for every point
+
+
+
+
+
+
+
+
 def simplify_intersections(network,threshold_inter):
     #create a copy of the input network as a memory layer
     crs=network.crs()
