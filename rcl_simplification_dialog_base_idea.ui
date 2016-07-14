@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>261</width>
-    <height>418</height>
+    <width>272</width>
+    <height>375</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -24,13 +24,18 @@
     <rect>
      <x>14</x>
      <y>12</y>
-     <width>242</width>
-     <height>392</height>
+     <width>248</width>
+     <height>355</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <widget class="QTabWidget" name="tabWidget">
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="currentIndex">
        <number>0</number>
       </property>
@@ -38,9 +43,16 @@
        <attribute name="title">
         <string>Angle</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_7">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QLabel" name="label">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="text">
            <string>Network to be simplified </string>
           </property>
@@ -50,16 +62,14 @@
          <widget class="QComboBox" name="choose_input_layer"/>
         </item>
         <item>
-         <widget class="QCheckBox" name="checkBox_4">
-          <property name="text">
-           <string>clean </string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_29">
           <item>
            <widget class="QCheckBox" name="checkBox_3">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>snap </string>
             </property>
@@ -71,16 +81,21 @@
              <widget class="QLabel" name="label_38">
               <property name="font">
                <font>
+                <pointsize>8</pointsize>
                 <italic>false</italic>
                </font>
               </property>
               <property name="text">
-               <string>decimals</string>
+               <string>decimals precision</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QDoubleSpinBox" name="length_threshold_13"/>
+             <widget class="QDoubleSpinBox" name="length_threshold_13">
+              <property name="decimals">
+               <number>0</number>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -95,6 +110,13 @@
         </item>
         <item>
          <widget class="QLabel" name="label_3">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="text">
            <string>Parameters</string>
           </property>
@@ -104,6 +126,13 @@
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QLabel" name="label_47">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
             <property name="text">
              <string>length</string>
             </property>
@@ -117,6 +146,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
            </widget>
           </item>
          </layout>
@@ -125,6 +157,13 @@
          <layout class="QHBoxLayout" name="horizontalLayout_25">
           <item>
            <widget class="QLabel" name="label_44">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
             <property name="text">
              <string>angle</string>
             </property>
@@ -136,7 +175,7 @@
              <widget class="QLabel" name="label_45">
               <property name="font">
                <font>
-                <pointsize>10</pointsize>
+                <pointsize>7</pointsize>
                </font>
               </property>
               <property name="text">
@@ -145,17 +184,41 @@
              </widget>
             </item>
             <item>
-             <widget class="QDoubleSpinBox" name="angle_threshold_14"/>
+             <widget class="QDoubleSpinBox" name="angle_threshold_14">
+              <property name="decimals">
+               <number>1</number>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_27">
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_24">
             <item>
              <widget class="QLabel" name="label_46">
               <property name="font">
                <font>
-                <pointsize>10</pointsize>
+                <pointsize>7</pointsize>
                </font>
               </property>
               <property name="text">
@@ -164,7 +227,11 @@
              </widget>
             </item>
             <item>
-             <widget class="QDoubleSpinBox" name="angle_threshold_15"/>
+             <widget class="QDoubleSpinBox" name="angle_threshold_15">
+              <property name="decimals">
+               <number>1</number>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -179,6 +246,13 @@
         </item>
         <item>
          <widget class="QLabel" name="label_5">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="text">
            <string>Output location</string>
           </property>
@@ -206,21 +280,25 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="analysis_9">
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="text">
-           <string>Run</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QProgressBar" name="progressBar">
-          <property name="value">
-           <number>24</number>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QProgressBar" name="progressBar">
+            <property name="value">
+             <number>24</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="analysis_9">
+            <property name="layoutDirection">
+             <enum>Qt::RightToLeft</enum>
+            </property>
+            <property name="text">
+             <string>Run</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
        <zorder>label</zorder>
@@ -230,9 +308,9 @@
        <zorder>line</zorder>
        <zorder>label_3</zorder>
        <zorder>progressBar</zorder>
-       <zorder>checkBox_4</zorder>
        <zorder>line_17</zorder>
        <zorder>analysis_9</zorder>
+       <zorder>layoutWidget_4</zorder>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -241,6 +319,13 @@
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <widget class="QLabel" name="label_35">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="text">
            <string>Network to be simplified </string>
           </property>
@@ -250,37 +335,34 @@
          <widget class="QComboBox" name="choose_input_layer_5"/>
         </item>
         <item>
-         <widget class="QCheckBox" name="checkBox">
-          <property name="text">
-           <string>clean </string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_19">
+         <layout class="QHBoxLayout" name="horizontalLayout_30">
           <item>
-           <widget class="QCheckBox" name="checkBox_2">
+           <widget class="QCheckBox" name="checkBox_4">
             <property name="text">
              <string>snap </string>
             </property>
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <layout class="QHBoxLayout" name="horizontalLayout_32">
             <item>
-             <widget class="QLabel" name="label_36">
+             <widget class="QLabel" name="label_39">
               <property name="font">
                <font>
                 <italic>false</italic>
                </font>
               </property>
               <property name="text">
-               <string>decimals</string>
+               <string>decimals precision</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QDoubleSpinBox" name="length_threshold_10"/>
+             <widget class="QDoubleSpinBox" name="length_threshold_14">
+              <property name="decimals">
+               <number>0</number>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -295,6 +377,13 @@
         </item>
         <item>
          <widget class="QLabel" name="label_4">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="text">
            <string>Parameters</string>
           </property>
@@ -317,58 +406,85 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
            </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_40">
+            <property name="text">
+             <string>length </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_21">
+            <item>
+             <widget class="QLabel" name="label_41">
+              <property name="font">
+               <font>
+                <pointsize>7</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>min</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="angle_threshold_12">
+              <property name="decimals">
+               <number>4</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_6">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_20">
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Preferred</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_22">
             <item>
-             <widget class="QLabel" name="label_40">
+             <widget class="QLabel" name="label_42">
+              <property name="font">
+               <font>
+                <pointsize>7</pointsize>
+               </font>
+              </property>
               <property name="text">
-               <string>length </string>
+               <string>max</string>
               </property>
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_21">
-              <item>
-               <widget class="QLabel" name="label_41">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>min</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="angle_threshold_12"/>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_22">
-              <item>
-               <widget class="QLabel" name="label_42">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>max</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="angle_threshold_13"/>
-              </item>
-             </layout>
+             <widget class="QDoubleSpinBox" name="angle_threshold_13">
+              <property name="decimals">
+               <number>4</number>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -383,6 +499,13 @@
         </item>
         <item>
          <widget class="QLabel" name="label_43">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="text">
            <string>Output location</string>
           </property>
@@ -410,43 +533,29 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="analysis_11">
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="text">
-           <string>Run</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QProgressBar" name="progressBar_2">
-          <property name="value">
-           <number>24</number>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QProgressBar" name="progressBar_2">
+            <property name="value">
+             <number>24</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="analysis_10">
+            <property name="layoutDirection">
+             <enum>Qt::RightToLeft</enum>
+            </property>
+            <property name="text">
+             <string>Run</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
      </widget>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4"/>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_24">
-        <item>
-         <widget class="QPushButton" name="analysis_12">
-          <property name="text">
-           <string>Exit</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
     </item>
    </layout>
   </widget>

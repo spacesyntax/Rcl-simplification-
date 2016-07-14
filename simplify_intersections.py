@@ -18,12 +18,8 @@ snap_graph
 
 
 def get_nodes_coord(graph):
-    list_coords = []
-    for i in graph.nodes():
-        list_coords.append(i)
-
+    list_coords = [i for i in graph.nodes()]
     return list_coords
-
 
 
 def make_points_from_shp(shp_original,list_coords ):
@@ -37,7 +33,6 @@ def make_points_from_shp(shp_original,list_coords ):
                       QgsField("x", QVariant.Double),
                       QgsField("y", QVariant.Double)])
     points.commitChanges()
-
     id = int(-1)
     features = []
     for i in list_coords:
@@ -47,11 +42,9 @@ def make_points_from_shp(shp_original,list_coords ):
         feat.setAttributes([id, i[0], i[1]])
         features.append(feat)
         id += int(1)
-
     points.startEditing()
     pr.addFeatures(features)
     points.commitChanges()
-
     return points
 
 
@@ -67,12 +60,21 @@ def find_closest_points(points):
     while fit.nextFeature(feat):
         spIndex.insertFeature(feat)
     # find lines intersecting other lines
-    neighboring_points = {i.id(): spIndex.nearestNeighbor(QgsPoint(i.geometry().asPoint()), 10) for i in points.getFeatures()}
+    neighboring_points = {i.id(): spIndex.nearestNeighbor(QgsPoint(i.geometry().asPoint()), 8) for i in points.getFeatures()}
+    return neighboring_points
 
 
-# compare with connected nodes for every point
+# compare with neighbouring nodes in the graph /snapped graph?
 
 
+def find_not_connected_nodes(graph,neighboring_points):
+    not_connected_nodes = {}
+    for k, v in neighboring_points.items():
+        not_connected_nodes[k] = [node for node in v if v not in graph.neighbors(k)]
+    return not_connected_nodes
+
+
+# add extra short edges
 
 
 

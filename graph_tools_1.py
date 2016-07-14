@@ -13,6 +13,11 @@ def make_iter(my_list):
         yield my_list[i]
 
 
+def pair(list): #Iterate over pairs in a list 
+    for i in range(1, len(list)):
+        yield list[i-1], list[i]
+# for seg_start, seg_end in pair(line.asPolyline()):
+
 snap_threshold = 0.0001
 
 
@@ -117,7 +122,7 @@ def graph_to_dual(snapped_graph,continuously=False):
     dual_graph = nx.MultiGraph()
     dual_graph.add_edges_from(dual_graph_edges)
     for e in snapped_graph.edges_iter(data='feat_id'):
-        dual_graph.add_node(e[2])
+        dual_graph.add_node(e[2]['feat_id'])
     return dual_graph
 
 
@@ -174,6 +179,8 @@ def graphs_intersection(dual_graph_1, dual_graph_2):
         if dual_graph_1.degree(node) > dual_graph_2.degree(node):
             lines_inter.append(node)
     return lines_inter
+
+
 
 
 def merge_graph(dual_graph_input,shp_path):
