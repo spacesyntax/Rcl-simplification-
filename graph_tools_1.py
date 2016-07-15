@@ -1,29 +1,12 @@
 import networkx as nx
 from networkx import connected_components
 import itertools
-import processing
 from decimal import *
-import math
-
-# make iterator
 
 
-def make_iter(my_list):
-    for i in range(0,len(my_list-1)):
-        yield my_list[i]
-
-
-def pair(list): #Iterate over pairs in a list 
-    for i in range(1, len(list)):
-        yield list[i-1], list[i]
-# for seg_start, seg_end in pair(line.asPolyline()):
-
-snap_threshold = 0.0001
-
-
-def point_equality(vertex1,vertex2, snap_threshold):
-    return ((abs(vertex1[0] - vertex2[0]) < snap_threshold) and
-            (abs(vertex1[1] - vertex2[1]) < snap_threshold))
+# TO DO: add function to clean invalid and duplicate geometries
+def clean_geoms_shp(shp_path):
+    pass
 
 number_decimals = 6
 
@@ -39,12 +22,6 @@ def keep_decimals(number, number_decimals):
         decimal = ('-' + str(integer_part) + '.' + decimal_part[0:number_decimals])
     return decimal
 
-
-def explode_shapefile(shp_path, expl_shp_path):
-    shp_input = QgsVectorLayer(shp_path, "network", "ogr")
-    processing.runalg("qgis:explodelines", shp_input, expl_shp_path)
-    expl_shp = QgsVectorLayer(expl_shp_path, "network_exploded", "ogr")
-    return expl_shp
 
 # add_unique_feature_id column
 # now it has been manually added ('feat_id')
@@ -73,20 +50,6 @@ def snap_graph(graph, number_decimals):
     snapped_edges = [((Decimal(keep_decimals(edge[0][0], number_decimals)), Decimal(keep_decimals(edge[0][1], number_decimals))), (Decimal(keep_decimals(edge[1][0], number_decimals)), Decimal(keep_decimals(edge[1][1],number_decimals))), edge[2]) for edge in edges]
     snapped_graph.add_edges_from(snapped_edges)
     return snapped_graph
-
-
-# slower function
-
-
-def parse_shp_to_graph(shp_path):
-    shp = QgsVectorLayer(shp_path, "network", "ogr")
-    # shapefile should be exploded first
-    shp_edges = {i.id(): i.geometryAndOwnership() for i in shp.getFeatures()}
-    attr_dict = {i.id(): i.attributes() for i in shp.getFeatures()}
-    graph = nx.MultiGraph()
-    for k, v in shp_edges.items():
-        graph.add_edge(v.asPolyline()[0], v.asPolyline()[-1], attr=attr_dict[k])
-    return graph
 
 
 # convert primary graph to dual graph
@@ -122,65 +85,8 @@ def graph_to_dual(snapped_graph,continuously=False):
     dual_graph = nx.MultiGraph()
     dual_graph.add_edges_from(dual_graph_edges)
     for e in snapped_graph.edges_iter(data='feat_id'):
-        dual_graph.add_node(e[2]['feat_id'])
+        dual_graph.add_node(e[2])
     return dual_graph
-
-
-def to_graph(l):
-    g = nx.Graph()
-    for part in l:
-        # each sub-list is a bunch of nodes
-        g.add_nodes_from(part)
-        # it also implies a number of edges:
-        g.add_edges_from(to_edges(part))
-    return g
-
-
-# careful it does not give all possible combinations)
-def to_edges(l):
-    """
-        treat `l` as a Graph and returns it's edges
-        to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
-    """
-    it = iter(l)
-    last = next(it)
-    for current in it:
-        yield last, current
-        last = current
-
-
-def subgraph_for_back(shp,dual_graph):
-    # subgraph by attribute
-    expr_foreground = QgsExpression(
-        "type= 'primary' OR type='primary_link' OR type = 'motorway' OR type= 'motorway_link' OR type= 'secondary' OR type= 'secondary_link' OR type= 'trunk' OR type= 'trunk_link'")
-    expr_background = QgsExpression(
-        "type='tertiary' or type='tertiary_link' or type= 'bridge' OR type='footway' OR type = 'living_street' OR type= 'path' OR type= 'pedestrian' OR type= 'residential' OR type= 'road' OR type= 'service' OR type= 'steps' OR type= 'track' OR type= 'unclassified' OR type='abandonded' OR type='bridleway' OR type='bus_stop' OR type='construction' OR type='elevator' OR type='proposed' OR type='raceway' OR type='rest_area'")
-    osm_ids_foreground = []
-    osm_ids_background = []
-    for elem in shp.getFeatures(QgsFeatureRequest(expr_foreground)):
-        osm_ids_foreground.append(elem.attribute('osm_id'))
-    for elem in shp.getFeatures(QgsFeatureRequest(expr_background)):
-        osm_ids_background.append(elem.attribute('osm_id'))
-    for_sub_dual = dual_graph.subgraph(osm_ids_foreground)
-    back_sub_dual = dual_graph.subgraph(osm_ids_background)
-    return for_sub_dual, back_sub_dual
-
-# subgraph a graph based on specified values of an attribute
-# attr argument should be a string
-# eg. attr = 'type'
-# values should be a list
-# eg. values = ['primary', 'primary_link', 'motorway', 'motorway_link', 'secondary', 'secondary_link', 'trunk', 'trunk_link']
-# eg. values = ['tertiary','tertiary_link', 'bridge', 'footway', 'living_street', 'path', 'pedestrian', 'residential', 'road', 'service', 'steps', 'track', 'unclassified', 'abandonded', 'bridleway', 'bus_stop', 'construction', 'elevator', 'proposed', 'raceway', 'rest_area']
-
-
-def graphs_intersection(dual_graph_1, dual_graph_2):
-    lines_inter = []
-    for node in dual_graph_2.nodes():
-        if dual_graph_1.degree(node) > dual_graph_2.degree(node):
-            lines_inter.append(node)
-    return lines_inter
-
-
 
 
 def merge_graph(dual_graph_input,shp_path):

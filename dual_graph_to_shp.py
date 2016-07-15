@@ -4,6 +4,7 @@ import math
 
 # find midpoint between two points
 
+
 def mid(pt1, pt2):
     x = (pt1.x() + pt2.x())/2
     y = (pt1.y() + pt2.y())/2
@@ -26,6 +27,7 @@ def pl_midpoint(pl_geom):
             midpoint = mid(vertices[ind_mid_before], vertices[ind_mid_after])
             break
     return midpoint
+
 def add_column(v_layer, col_name, col_type):
     pr = v_layer.dataProvider()
     v_layer.startEditing()
@@ -33,7 +35,7 @@ def add_column(v_layer, col_name, col_type):
     v_layer.commitChanges()
 
 
-def dual_to_shp( network,dual_graph):
+def dual_to_shp(network,dual_graph):
     centroids = {i.id(): pl_midpoint(i.geometry()) for i in network.getFeatures()}
 
     # new point layer with centroids

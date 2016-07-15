@@ -68,10 +68,11 @@ def simplify_angle(network, angular_threshold, length_threshold):
                     p = QgsPoint(f_geom.asPolyline()[i])
                     new_pl.append(p)
                 new_geom = QgsGeometry().fromPolyline(new_pl)
-                new_feat = QgsFeature()
-                new_feat.setGeometry(new_geom)
-                new_feat.setAttributes(feature.attributes())
-                New[feature.id()] = new_feat
+                if new_geom isGeosValid():
+                    new_feat = QgsFeature()
+                    new_feat.setGeometry(new_geom)
+                    new_feat.setAttributes(feature.attributes())
+                    New[feature.id()] = new_feat
         else:
             Copy[feature.id()] = feature
 
