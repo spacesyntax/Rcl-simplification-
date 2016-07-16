@@ -2,7 +2,7 @@ import networkx as nx
 from networkx import connected_components
 import itertools
 from decimal import *
-
+from qgis.core import *
 
 # TO DO: add function to clean invalid and duplicate geometries
 def clean_geoms_shp(shp_path):

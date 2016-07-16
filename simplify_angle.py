@@ -1,6 +1,6 @@
 import math
 import networkx as nx
-
+from qgis.core import *
 
 def simplify_angle(network, angular_threshold, length_threshold):
 
@@ -68,7 +68,7 @@ def simplify_angle(network, angular_threshold, length_threshold):
                     p = QgsPoint(f_geom.asPolyline()[i])
                     new_pl.append(p)
                 new_geom = QgsGeometry().fromPolyline(new_pl)
-                if new_geom isGeosValid():
+                if new_geom.isGeosValid():
                     new_feat = QgsFeature()
                     new_feat.setGeometry(new_geom)
                     new_feat.setAttributes(feature.attributes())
