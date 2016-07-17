@@ -98,8 +98,8 @@ def find_short_edges(primal_graph, inter_distance_threshold):
 # b = find_short_edges(graph, 0.0001)
 
 # construct a dual graph with all connections
-dual = graph_to_dual(graph, continuously=False)
-short_edges_dual = dual.subgraph(ids_short)
+# dual = graph_to_dual(graph, inter_to_inter=False)
+# short_edges_dual = dual.subgraph(ids_short)
 
 
 def find_connected_subgraphs(dual, short_edges_dual):
@@ -174,6 +174,7 @@ def simplify_intersection_geoms(shp_path, short_lines_neighbours):
                 feat_to_modify[f.id()] = new_geom
 
     return feat_to_del, feat_to_modify, feat_to_copy
+
 
 def clean_network(length_max_threshold, length_min_threshold):
     pass

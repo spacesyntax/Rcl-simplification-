@@ -4,10 +4,9 @@ import itertools
 from decimal import *
 from qgis.core import *
 
-# TO DO: add function to clean invalid and duplicate geometries
-def clean_geoms_shp(shp_path):
-    pass
 
+# depthmap uses a precision of 6 decimals
+# find equivalent to mm precision or use depthmap default precision
 number_decimals = 6
 
 
@@ -22,30 +21,120 @@ def keep_decimals(number, number_decimals):
         decimal = ('-' + str(integer_part) + '.' + decimal_part[0:number_decimals])
     return decimal
 
-
-# add_unique_feature_id column
+# add unique feature id column
 # now it has been manually added ('feat_id')
+
+
+def update_feat_id_col(shp):
+    pr = shp.dataProvider()
+    if 'feat_id' not in pr.fields():
+        shp.startEditing()
+        pr.addAttributes([QgsField('feat_id', QVariant.Int)])
+        shp.commitChanges()
+
+    fieldIdx = shp.dataProvider().fields().indexFromName('feat_id')
+    updateMap = {}
+
+    for f in shp.getFeatures():
+        updateMap[f.id()] = {fieldIdx: f.id()}
+
+    shp.dataProvider().changeAttributeValues(updateMap)
+
+
+# TODO: add networkx function
+
+# reference: http://stackoverflow.com/questions/30770776/networkx-how-to-create-multidigraph-from-shapefile
+
+
+def read_multi_shp(path):
+    """
+    copied from read_shp, but allowing MultiDiGraph instead.
+    """
+    try:
+        from osgeo import ogr
+    except ImportError:
+        raise ImportError("read_shp requires OGR: http://www.gdal.org/")
+
+    net = nx.MultiDiGraph() # <--- here is the main change I made
+
+    def getfieldinfo(lyr, feature, flds):
+            f = feature
+            return [f.GetField(f.GetFieldIndex(x)) for x in flds]
+
+    def addlyr(lyr, fields):
+        for findex in xrange(lyr.GetFeatureCount()):
+            f = lyr.GetFeature(findex)
+            flddata = getfieldinfo(lyr, f, fields)
+            g = f.geometry()
+            attributes = dict(zip(fields, flddata))
+            attributes["ShpName"] = lyr.GetName()
+            if g.GetGeometryType() == 1:  # point
+                net.add_node((g.GetPoint_2D(0)), attributes)
+            if g.GetGeometryType() == 2:  # linestring
+                attributes["Wkb"] = g.ExportToWkb()
+                attributes["Wkt"] = g.ExportToWkt()
+                attributes["Json"] = g.ExportToJson()
+                last = g.GetPointCount() - 1
+                net.add_edge(g.GetPoint_2D(0), g.GetPoint_2D(last), attr_dict=attributes) #<--- also changed this line
+
+    if isinstance(path, str):
+        shp = ogr.Open(path)
+        lyrcount = shp.GetLayerCount()  # multiple layers indicate a directory
+        for lyrindex in xrange(lyrcount):
+            lyr = shp.GetLayerByIndex(lyrindex)
+            flds = [x.GetName() for x in lyr.schema]
+            addlyr(lyr, flds)
+    return net
+
+
+def read_shp_to_multi(shp_path):
+    graph_shp = read_multi_shp(shp_path)
+    graph = nx.MultiGraph(graph_shp.to_undirected(reciprocal=False))
+    return graph 
+
+
 # add parameter simplify = True so that you deal with less features
+# issue in windows (different versions of networkx?)
+
 def read_shp_to_graph(shp_path):
     graph_shp = nx.read_shp(str(shp_path), simplify=True)
     shp = QgsVectorLayer(shp_path, "network", "ogr")
-    # parallel edges are excluded of the graph because read_shp does not return a multi-graph, self-loops are included
-    # all_ids = [i.id() for i in shp.getFeatures()]
-    # ids = [i[2]['feat_id'] for i in graph.edges(data=True)]
-    # parallel_ids = [fid for fid in all_ids if fid not in ids]
     graph = nx.MultiGraph(graph_shp.to_undirected(reciprocal=False))
-    # while len(parallel_ids) > 0
-    # create new shapefile with lines that have not been added (parallel_ids)
-    # column_names = [i.name() for i in shp.pendingFields()]
-    # for i in parallel_lines:
-    #    graph.add_edge(i[1],i[1],dict(zip(column_names,i[2])))
+    # parallel edges are excluded of the graph because read_shp does not return a multi-graph, self-loops are included
+    all_ids = [i.id() for i in shp.getFeatures()]
+    ids_incl = [i[2]['feat_id'] for i in graph.edges(data=True)]
+    ids_excl = list(set(all_ids) - set(ids_incl))
+
+    request = QgsFeatureRequest().setFilterFids(list(ids_excl))
+    excl_features = [feat for feat in shp.getFeatures(request)]
+
+    ids_excl_attr = [[i.geometry().asPolyline()[0], i.geometry().asPolyline()[-1], i.attributes()] for i in
+                     excl_features]
+    column_names = [i.name() for i in shp.dataProvider().fields()]
+
+    for i in ids_excl_attr:
+        graph.add_edge(i[0], i[1], dict(zip(column_names,i[2])))
+
     return graph
+
+
+# TODO: add function to clean invalid and duplicate geometries
+def get_invalid_duplicate_geoms_ids(shp_path):
+    shp = QgsVectorLayer(shp_path, "network", "ogr")
+    invalid_geoms_ids = [i.id() for i in shp.getFeatures() if not i.geometry().isGeosValid()]
+
+    #TODO replace processing algorithm (speed)
+    #TODO check same length
+    # processing.runalg('qgis:deleteduplicategeometries', input, output)
+
+    # TODO delete edges from the graph
+    return invalid_geoms_ids + duplicate_geoms_ids
 
 
 def snap_graph(graph, number_decimals):
     snapped_graph = nx.MultiGraph()
     edges = graph.edges(data=True)
-    getcontext().prec = 3
+    # maybe not needed
     getcontext().rounding = ROUND_DOWN
     snapped_edges = [((Decimal(keep_decimals(edge[0][0], number_decimals)), Decimal(keep_decimals(edge[0][1], number_decimals))), (Decimal(keep_decimals(edge[1][0], number_decimals)), Decimal(keep_decimals(edge[1][1],number_decimals))), edge[2]) for edge in edges]
     snapped_graph.add_edges_from(snapped_edges)
@@ -53,29 +142,22 @@ def snap_graph(graph, number_decimals):
 
 
 # convert primary graph to dual graph
-# TO DO: add option for including length
-
 # primary graph consists of nodes (points) and edges (point,point)
-# TO DO: both of them are features
-# TO DO: construct {feature line:[feature_point, feature_point]} from shp
-
-# TO DO: add id column name as argument
 
 
-def graph_to_dual(snapped_graph,continuously=False):
+def graph_to_dual(snapped_graph, inter_to_inter=False):
     # construct a dual graph with all connections
     dual_graph_edges = []
     dual_graph_nodes = []
-    # TO DO: add nodes (some lines are not connected to others because they are pl)
     # all lines
-    if not continuously:
+    if not inter_to_inter:
         for i, j in snapped_graph.adjacency_iter():
             edges = []
             for k, v in j.items():
                 edges.append(v[0]['feat_id'])
             dual_graph_edges += [x for x in itertools.combinations(edges, 2)]
     # only lines with connectivity 2
-    if continuously:
+    if inter_to_inter:
         for i, j in snapped_graph.adjacency_iter():
             edges = []
             if len(j) == 2:
@@ -84,6 +166,7 @@ def graph_to_dual(snapped_graph,continuously=False):
             dual_graph_edges += [x for x in itertools.combinations(edges, 2)]
     dual_graph = nx.MultiGraph()
     dual_graph.add_edges_from(dual_graph_edges)
+    # add nodes (some lines are not connected to others because they are pl)
     for e in snapped_graph.edges_iter(data='feat_id'):
         dual_graph.add_node(e[2])
     return dual_graph
@@ -116,30 +199,13 @@ def merge_graph(dual_graph_input,shp_path):
                 del set_in_order[-1]
             sets_in_order.append(set_in_order)
 
-    # TO DO: alter dual graph
+    # TODO: alter dual graph
     dual_graph_output = nx.MultiGraph(dual_graph_input)
-    for j in sets_in_order:
-        if len(j) > 1:
-            new_node = attr_dict[set[0]][8]
-            all_neighbors = []
-            for node in j:
-                for neigh in dual_graph_input.neighbors(node):
-                    all_neighbors.append(neigh)
-                if node != j[0] and dual_graph_output.has_node(node):
-                    dual_graph_output.remove_node(node)
-            all_neighbors_unique = []
-            for x in all_neighbors:
-                if x not in all_neighbors_unique and x not in j:
-                    all_neighbors_unique.append(x)
-            new_edges = [(new_node, x) for x in all_neighbors_unique]
-            dual_graph_output.add_edges_from(new_edges)
-
 
     # merge segments based on sequence of ids plus two endpoints - combine geometries (new_seq_ids)
-    return sets_in_order, dual_graph_output
+    return sets_in_order
 
-# TO DO: not random generation of new attributes
-
+# TODO: not random generation of new attributes
 
 def merge_geometries(sets_in_order, shp_path):
     shp = QgsVectorLayer(shp_path, "network", 'ogr')
@@ -214,7 +280,6 @@ def break_multiparts(shp):
 
 
 def break_graph(dual_graph_output, merged_network):
-    # TO DO:
     # 1. Break at intersections
     # create spatial index for features in line layer
     provider = merged_network.dataProvider()
