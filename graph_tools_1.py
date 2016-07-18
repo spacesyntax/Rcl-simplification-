@@ -43,60 +43,12 @@ def update_feat_id_col(shp):
 
 # TODO: add networkx function
 
-# reference: http://stackoverflow.com/questions/30770776/networkx-how-to-create-multidigraph-from-shapefile
-
-
-def read_multi_shp(path):
-    """
-    copied from read_shp, but allowing MultiDiGraph instead.
-    """
-    try:
-        from osgeo import ogr
-    except ImportError:
-        raise ImportError("read_shp requires OGR: http://www.gdal.org/")
-
-    net = nx.MultiDiGraph() # <--- here is the main change I made
-
-    def getfieldinfo(lyr, feature, flds):
-            f = feature
-            return [f.GetField(f.GetFieldIndex(x)) for x in flds]
-
-    def addlyr(lyr, fields):
-        for findex in xrange(lyr.GetFeatureCount()):
-            f = lyr.GetFeature(findex)
-            flddata = getfieldinfo(lyr, f, fields)
-            g = f.geometry()
-            attributes = dict(zip(fields, flddata))
-            attributes["ShpName"] = lyr.GetName()
-            if g.GetGeometryType() == 1:  # point
-                net.add_node((g.GetPoint_2D(0)), attributes)
-            if g.GetGeometryType() == 2:  # linestring
-                attributes["Wkb"] = g.ExportToWkb()
-                attributes["Wkt"] = g.ExportToWkt()
-                attributes["Json"] = g.ExportToJson()
-                last = g.GetPointCount() - 1
-                net.add_edge(g.GetPoint_2D(0), g.GetPoint_2D(last), attr_dict=attributes) #<--- also changed this line
-
-    if isinstance(path, str):
-        shp = ogr.Open(path)
-        lyrcount = shp.GetLayerCount()  # multiple layers indicate a directory
-        for lyrindex in xrange(lyrcount):
-            lyr = shp.GetLayerByIndex(lyrindex)
-            flds = [x.GetName() for x in lyr.schema]
-            addlyr(lyr, flds)
-    return net
-
-
-def read_shp_to_multi(shp_path):
-    graph_shp = read_multi_shp(shp_path)
-    graph = nx.MultiGraph(graph_shp.to_undirected(reciprocal=False))
-    return graph 
-
 
 # add parameter simplify = True so that you deal with less features
 # issue in windows (different versions of networkx?)
 
 def read_shp_to_graph(shp_path):
+    
     graph_shp = nx.read_shp(str(shp_path), simplify=True)
     shp = QgsVectorLayer(shp_path, "network", "ogr")
     graph = nx.MultiGraph(graph_shp.to_undirected(reciprocal=False))
@@ -113,7 +65,7 @@ def read_shp_to_graph(shp_path):
     column_names = [i.name() for i in shp.dataProvider().fields()]
 
     for i in ids_excl_attr:
-        graph.add_edge(i[0], i[1], dict(zip(column_names,i[2])))
+        graph.add_edge(i[0], i[1], attr_dict=dict(zip(column_names,i[2])))
 
     return graph
 
