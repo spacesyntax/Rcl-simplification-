@@ -10,7 +10,7 @@ import os.path
 
 # depthmap uses a precision of 6 decimals
 # find equivalent to mm precision or use depthmap default precision
-number_decimals = 6
+# number_decimals = 6
 
 
 def keep_decimals(number, number_decimals):
@@ -33,30 +33,19 @@ def keep_decimals(number, number_decimals):
 def update_feat_id_col(shp_path):
     shp = QgsVectorLayer( shp_path, "network", "ogr")
     pr = shp.dataProvider()
-    if 'feat_id' in [x.name() for x in pr.fields()]:
-        index = pr.fields().indexFromName('feat_id')
-        shp.dataProvider().deleteAttributes([index])
+    fieldIdx = shp.dataProvider().fields().indexFromName('feat_id')
+    if fieldIdx == -1:
+        shp.startEditing()
+        pr.addAttributes([QgsField('feat_id', QVariant.Int)])
+        shp.commitChanges()
         shp.updateFields()
+        fieldIdx = shp.dataProvider().fields().indexFromName('feat_id')
 
-    QgsMapLayerRegistry.instance().addMapLayer(shp)
-    shp.startEditing()
-    pr.addAttributes([QgsField('feat_id', QVariant.Int)])
-    shp.commitChanges()
-    shp.updateFields()
-
-    fieldIdx = pr.fields().indexFromName('feat_id')
     updateMap = {}
-
-    id = int(-1)
     for f in shp.getFeatures():
-        id += int(1)
-        updateMap[f.id()] = {fieldIdx: id}
+        updateMap[f.id()] = {fieldIdx: f.id()}
 
     shp.dataProvider().changeAttributeValues(updateMap)
-
-    name_network = [i.name() for i, j in QgsMapLayerRegistry.instance().mapLayers().items()]
-
-    QgsMapLayerRegistry.instance().removeMapLayer(name_network)
 
 
 # TODO: break edges at the graph, avoid changing raw data
@@ -91,6 +80,8 @@ def break_multiparts(shp):
 
 # add parameter simplify = True so that you deal with less features
 # issue in windows (different versions of networkx?)
+
+# TODO: if the input layer is a memory layer then write the shp to local drive and after the process delete it
 
 def read_shp_to_graph(shp_path):
     

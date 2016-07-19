@@ -3,6 +3,8 @@ import networkx as nx
 from qgis.core import *
 import itertools
 import math
+# from graph_tools_1 import keep_decimals
+from decimal import *
 
 # construct graph
 # snap graph
@@ -83,8 +85,8 @@ def find_not_connected_nodes(shp_path, graph,points_shp,neighboring_points, inte
 # add extra short edges to the graph
 
 
-def add_short_edges_to_graph(edges_list, graph):
-    graph.add_edges_from(edges_list)
+
+# graph.add_edges_from(edge_list)
 
 
 def find_short_edges(primal_graph, inter_distance_threshold):
@@ -92,7 +94,7 @@ def find_short_edges(primal_graph, inter_distance_threshold):
     for i in primal_graph.edges(data='feat_id'):
         if math.hypot(abs(i[0][0] - i[1][0]), abs(i[0][1] - i[1][1])) <= inter_distance_threshold:
             ids_short.append(i[2])
-    return ids_short
+    return list(set(ids_short))
 
 
 # b = find_short_edges(graph, 0.0001)
@@ -103,7 +105,7 @@ def find_short_edges(primal_graph, inter_distance_threshold):
 
 
 def find_connected_subgraphs(dual, short_edges_dual):
-    short_lines_neighbours = []
+    short_lines_neighbours = {}
     connected_short_lines = [list(i) for i in nx.connected_components(short_edges_dual)]
     for i in connected_short_lines:
         neighbours = []
@@ -113,29 +115,29 @@ def find_connected_subgraphs(dual, short_edges_dual):
     return short_lines_neighbours
 
 
-def simplify_intersection_geoms(shp_path, short_lines_neighbours):
+def simplify_intersection_geoms(shp_path, short_lines_neighbours, graph):
 
     network = QgsVectorLayer(shp_path, "network", "ogr")
+    attr_dict = {i.id(): i.attributes() for i in network.getFeatures()}
     crs = network.crs()
 
-    feat_to_copy = []
     feat_to_modify = {}
     feat_to_del = []
+
+    new_geoms ={}
 
     # new simplified shapefile layer
     simplified_network = QgsVectorLayer('LineString?crs=' + crs.toWkt(), "simplified_network", "memory")
     QgsMapLayerRegistry.instance().addMapLayer(simplified_network)
-    pr = simplified_network.dataProvider()
+    pr = network.dataProvider()
     simplified_network.startEditing()
-    pr.addAttributes(pr.fields())
+    simplified_network.dataProvider().addAttributes(pr.fields())
     simplified_network.commitChanges()
 
     all_new_points = []
     for k,v in short_lines_neighbours.items():
-        request = QgsFeatureRequest().setFilterFids(list(k))
-        short_features = [feat for feat in network.getFeatures(request)]
-        short_endpoints_all = [x.geometry().asPolyline()[0] for x in short_features]
-        short_endpoints_all += [x.geometry().asPolyline()[-1] for x in short_features]
+        short_endpoints_all = [edge[0] for edge in graph.edges(data=True) if edge[2]['feat_id'] in list(k)]
+        short_endpoints_all += [edge[1] for edge in graph.edges(data=True) if edge[2]['feat_id'] in list(k)]
         short_endpoints =[]
         for x in short_endpoints_all:
             if x not in short_endpoints:
@@ -145,35 +147,72 @@ def simplify_intersection_geoms(shp_path, short_lines_neighbours):
         new_point = (float(sum(x)) / float(len(short_endpoints)), float(sum(y)) / float(len(short_endpoints)))
         all_new_points.append(new_point)
         for i in v:
-            request = QgsFeatureRequest().setFilterFid(i)
-            f = [feat for feat in network.getFeatures(request)][0]
-            if f.geometry().asPolyline()[0] in short_endpoints and f.geometry().asPolyline()[-1] in short_endpoints:
-                feat_to_del.append(i)
-            elif f.geometry().asPolyline()[0] in short_endpoints and not f.geometry().asPolyline()[-1] in short_endpoints:
-                if len(f.geometry().asPolyline())<=2:
-                    point_index=0
-                    vertices_to_keep =[new_point]+[f.geometry().asPolyline()[-1]]
-                else:
-                    vertices_to_keep =[new_point]+[x for ind,x in enumerate(f.geometry().asPolyline()) if ind>=1]
-                new_pl=[]
-                for vertex in vertices_to_keep:
-                    p=QgsPoint(vertex[0],vertex[1])
-                    new_pl.append(p)
-                new_geom=QgsGeometry().fromPolyline(new_pl)
-                feat_to_modify[f.id()] = new_geom
-            elif f.geometry().asPolyline()[0] not in short_endpoints and f.geometry().asPolyline()[-1] in short_endpoints:
-                if len(f.geometry().asPolyline())<=2:
-                    vertices_to_keep=[f.geometry().asPolyline()[0]]+[new_point]
-                else:
-                    vertices_to_keep= [x for ind,x in enumerate(f.geometry().asPolyline()) if ind<=len(f.geometry().asPolyline())-2] +[new_point]
-                new_pl=[]
-                for vertex in vertices_to_keep:
-                    p=QgsPoint(vertex[0],vertex[1])
-                    new_pl.append(p)
-                new_geom=QgsGeometry().fromPolyline(new_pl)
-                feat_to_modify[f.id()] = new_geom
+            # TODO: Fix endpoints of pl so that it snaps with connected lines
+            # now a mixture of graph nodes and qgs feature nodes is used
+            if i < network.featureCount():
+                request = QgsFeatureRequest().setFilterFid(i)
+                f = next(network.getFeatures(request))
+                endpoint_0 = [edge[0] for edge in graph.edges(data=True) if edge[2]['feat_id'] == i][0]
+                endpoint_1 = [edge[1] for edge in graph.edges(data=True) if edge[2]['feat_id'] == i][0]
+                f_endpoint_0 = f.geometry().asPolyline()[0]
+                if endpoint_0 in short_endpoints and endpoint_1 in short_endpoints:
+                    feat_to_del.append(i)
+                elif (endpoint_0 in short_endpoints and not endpoint_1 in short_endpoints) or (endpoint_0 not in short_endpoints and endpoint_1 in short_endpoints):
+                    # find index
+                    if (Decimal(keep_decimals(f_endpoint_0[0],6)),Decimal(keep_decimals(f_endpoint_0[1],6))) in [(Decimal(keep_decimals(x[0],6)),Decimal(keep_decimals(x[1],6))) for x in short_endpoints]:
+                        # TODO: fix if the geometry has already been changed
+                        f_geom = f.geometry()
+                        if i in new_geoms.keys():
+                            f_geom = new_geoms[i]
+                        if len(f_geom.asPolyline())<=2:
+                            vertices_to_keep =[new_point]+[f_geom.asPolyline()[-1]]
+                        else:
+                            vertices_to_keep =[new_point]+[x for ind,x in enumerate(f_geom.asPolyline()) if ind>=1]
+                        new_pl=[]
+                        for vertex in vertices_to_keep:
+                            p=QgsPoint(vertex[0],vertex[1])
+                            new_pl.append(p)
+                        new_geom = QgsGeometry().fromPolyline(new_pl)
+                        new_feat = QgsFeature()
+                        new_feat.setGeometry(new_geom)
+                        new_feat.setAttributes(attr_dict[i])
+                        new_geoms[i] = new_geom
+                        feat_to_modify[i] = new_feat
+                    else:
+                        f_geom = f.geometry()
+                        if i in new_geoms.keys():
+                            f_geom = new_geoms[i]
+                        if len(f_geom.asPolyline())<=2:
+                            vertices_to_keep=[f_geom.asPolyline()[0]]+[new_point]
+                        else:
+                            vertices_to_keep= [x for ind,x in enumerate(f_geom.asPolyline()) if ind<=len(f_geom.asPolyline())-2] +[new_point]
+                        new_pl=[]
+                        for vertex in vertices_to_keep:
+                            p=QgsPoint(vertex[0],vertex[1])
+                            new_pl.append(p)
+                        new_geom=QgsGeometry().fromPolyline(new_pl)
+                        new_feat = QgsFeature()
+                        new_feat.setGeometry(new_geom)
+                        new_feat.setAttributes(attr_dict[i])
+                        new_geoms[i] = new_geom
+                        feat_to_modify[i] = new_feat
 
-    return feat_to_del, feat_to_modify, feat_to_copy
+    for x in short_lines_neighbours.keys():
+        for j in x:
+            feat_to_del.append(j)
+
+    all_ids = [i.id() for i in network.getFeatures()]
+    ids_feat_copy = [x for x in all_ids if x not in feat_to_del and x not in feat_to_modify.keys()]
+
+    request = QgsFeatureRequest().setFilterFids(ids_feat_copy)
+    feat_copy = [feat for feat in network.getFeatures(request)]
+
+    simplified_network.startEditing()
+    simplified_network.addFeatures(feat_to_modify.values() + feat_copy)
+    simplified_network.commitChanges()
+    simplified_network.removeSelection()
+
+    return feat_to_del, feat_to_modify, ids_feat_copy
 
 
 def clean_network(length_max_threshold, length_min_threshold):
