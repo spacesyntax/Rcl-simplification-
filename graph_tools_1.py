@@ -3,7 +3,10 @@ from networkx import connected_components
 import itertools
 from decimal import *
 from qgis.core import *
-
+from collections import Counter
+from itertools import izip as zip, count  # izip for maximum efficiency
+from PyQt4.QtCore import QVariant, QFileInfo
+import os.path
 
 # depthmap uses a precision of 6 decimals
 # find equivalent to mm precision or use depthmap default precision
@@ -25,21 +28,63 @@ def keep_decimals(number, number_decimals):
 # now it has been manually added ('feat_id')
 
 
-def update_feat_id_col(shp):
-    pr = shp.dataProvider()
-    if 'feat_id' not in pr.fields():
-        shp.startEditing()
-        pr.addAttributes([QgsField('feat_id', QVariant.Int)])
-        shp.commitChanges()
+# TODO: error when col_name already exists
 
-    fieldIdx = shp.dataProvider().fields().indexFromName('feat_id')
+def update_feat_id_col(shp_path):
+    shp = QgsVectorLayer( shp_path, "network", "ogr")
+    pr = shp.dataProvider()
+    if 'feat_id' in [x.name() for x in pr.fields()]:
+        index = pr.fields().indexFromName('feat_id')
+        shp.dataProvider().deleteAttributes([index])
+        shp.updateFields()
+
+    QgsMapLayerRegistry.instance().addMapLayer(shp)
+    shp.startEditing()
+    pr.addAttributes([QgsField('feat_id', QVariant.Int)])
+    shp.commitChanges()
+    shp.updateFields()
+
+    fieldIdx = pr.fields().indexFromName('feat_id')
     updateMap = {}
 
+    id = int(-1)
     for f in shp.getFeatures():
-        updateMap[f.id()] = {fieldIdx: f.id()}
+        id += int(1)
+        updateMap[f.id()] = {fieldIdx: id}
 
     shp.dataProvider().changeAttributeValues(updateMap)
 
+    name_network = [i.name() for i, j in QgsMapLayerRegistry.instance().mapLayers().items()]
+
+    QgsMapLayerRegistry.instance().removeMapLayer(name_network)
+
+
+# TODO: break edges at the graph, avoid changing raw data
+# this changes the raw data
+
+
+def break_multiparts(shp):
+    feat_to_del = []
+    for f in shp.getFeatures():
+        f_geom_type = f.geometry().wkbType()
+        if f_geom_type == 5:
+            f_id = f.id()
+            attr = f.attributes()
+            new_geoms = f.geometry().asGeometryCollection()
+            for i in new_geoms:
+                new_feat = QgsFeature()
+                new_feat.setGeometry(i)
+                new_feat.setAttributes(attr)
+                shp.startEditing()
+                shp.addFeature(new_feat, True)
+                shp.commitChanges()
+            feat_to_del.append(f_id)
+    shp.removeSelection()
+    shp.select(feat_to_del)
+    shp.startEditing()
+    shp.deleteSelectedFeatures()
+    shp.commitChanges()
+    shp.removeSelection()
 
 # TODO: add networkx function
 
@@ -55,7 +100,7 @@ def read_shp_to_graph(shp_path):
     # parallel edges are excluded of the graph because read_shp does not return a multi-graph, self-loops are included
     all_ids = [i.id() for i in shp.getFeatures()]
     ids_incl = [i[2]['feat_id'] for i in graph.edges(data=True)]
-    ids_excl = list(set(all_ids) - set(ids_incl))
+    ids_excl = set(all_ids) - set(ids_incl)
 
     request = QgsFeatureRequest().setFilterFids(list(ids_excl))
     excl_features = [feat for feat in shp.getFeatures(request)]
@@ -70,17 +115,21 @@ def read_shp_to_graph(shp_path):
     return graph
 
 
-# TODO: add function to clean invalid and duplicate geometries
-def get_invalid_duplicate_geoms_ids(shp_path):
+# TODO: to be tested
+def get_invalid_duplicate_geoms_ids(shp_path,graph):
     shp = QgsVectorLayer(shp_path, "network", "ogr")
     invalid_geoms_ids = [i.id() for i in shp.getFeatures() if not i.geometry().isGeosValid()]
 
-    #TODO replace processing algorithm (speed)
-    #TODO check same length
-    # processing.runalg('qgis:deleteduplicategeometries', input, output)
+    dupl_geoms_ids = []
 
-    # TODO delete edges from the graph
-    return invalid_geoms_ids + duplicate_geoms_ids
+    list_lengths =[i.geometry().length() for i in shp.getFeatures()]
+    dupl_lengths = list(set([k for k, v in Counter(list_lengths) if v>1 ]))
+    for item in dupl_lengths:
+        dupl_geoms_ids.append([i for i, j in zip(count(), [list_lengths]) if j == item])
+
+    for i in graph.edges(data=True):
+        if i['feat_id'] in invalid_geoms_ids + dupl_geoms_ids:
+            graph.remove_edge(i[0], i[1])
 
 
 def snap_graph(graph, number_decimals):
@@ -129,7 +178,6 @@ def merge_graph(dual_graph_input,shp_path):
     # Is there a grass function for QGIS 2.14???
     # sets of connected nodes (edges of primary graph)
     shp = QgsVectorLayer(shp_path, "network", 'ogr')
-    attr_dict = {i.id(): i.attributes() for i in shp.getFeatures()}
     sets = []
     for j in connected_components(dual_graph_input):
         sets.append(list(j))
@@ -207,28 +255,23 @@ def merge_geometries(sets_in_order, shp_path):
     return merged_network, merged_geoms
 
 
-def break_multiparts(shp):
-    feat_to_del = []
-    for f in shp.getFeatures():
-        f_geom_type = f.geometry().wkbType()
-        if f_geom_type == 5:
-            f_id = f.id()
-            attr = f.attributes()
-            new_geoms = f.geometry().asGeometryCollection()
-            for i in new_geoms:
-                new_feat = QgsFeature()
-                new_feat.setGeometry(i)
-                new_feat.setAttributes(attr)
-                shp.startEditing()
-                shp.addFeature(new_feat, True)
-                shp.commitChanges()
-            feat_to_del.append(f_id)
-    shp.removeSelection()
-    shp.select(feat_to_del)
-    shp.startEditing()
-    shp.deleteSelectedFeatures()
-    shp.commitChanges()
-    shp.removeSelection()
+def write_shp(merged_network,shp_path):
+    shp_path_to_write = os.path.dirname(shp_path) +"/"+ QFileInfo(shp_path).baseName() + "_merged.shp"
+    # add a writer
+    shp = QgsVectorLayer(shp_path, "network","ogr")
+    provider = shp.dataProvider()
+    shp_writer = QgsVectorFileWriter(shp_path_to_write, provider.encoding(), provider.fields(),
+                                                   provider.geometryType(), provider.crs(), "ESRI Shapefile")
+    if shp_writer.hasError() != QgsVectorFileWriter.NoError:
+        print "Error when creating shapefile: ", shp_writer.errorMessage()
+    del shp_writer
+    network_to_break = QgsVectorLayer(shp_path_to_write, "network_to_break", "ogr")
+    network_to_break.updateFields()
+    network_to_break.dataProvider().addFeatures([x for x in merged_network.getFeatures()])
+    QgsMapLayerRegistry.instance().addMapLayer(network_to_break)
+    return shp_path_to_write
+
+
 
 
 def break_graph(dual_graph_output, merged_network):

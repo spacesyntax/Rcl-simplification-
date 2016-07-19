@@ -7,6 +7,7 @@ request = QgsFeatureRequest().setFilterFids( fids )
 list = [ feat for feat in layer.getFeatures( request ) ]
 
 
+# processing.runalg('qgis:deleteduplicategeometries', input, output)
 
 # reference: http://stackoverflow.com/questions/30770776/networkx-how-to-create-multidigraph-from-shapefile
 
