@@ -6,14 +6,13 @@ def simplify_angle(network, angular_threshold, length_threshold):
 
     New = {}
     Copy = {}
-    for feature in network.getFeatures():
-        f = feature
+
+    for f in network.getFeatures():
         f_geom = f.geometry()
         if len(f_geom.asPolyline()) > 2:
             Dual_G = nx.Graph()
             indices_to_del_angle = []
             indices_to_del_length = []
-            l=length_threshold
             for index, point in enumerate(f_geom.asPolyline()):
                 if index < len(f_geom.asPolyline()) - 2:
                     first_x = point[0]
@@ -34,35 +33,43 @@ def simplify_angle(network, angular_threshold, length_threshold):
                     angle = 180 - angle
                     Dual_G.add_edge((index, index + 1), (index + 1, index + 2), angular_change=angle)
                 if index < len(f_geom.asPolyline()) - 1:
-                    first = point
-                    next = f_geom.asPolyline()[(index + 1) % len(f_geom.asPolyline())]
-                    l = math.hypot(first[0] - next[0], first[1] - next[1])
+                    first_f = point
+                    next_f = f_geom.asPolyline()[(index + 1) % len(f_geom.asPolyline())]
+                    l = math.hypot(first_f[0] - next_f[0], first_f[1] - next_f[1])
                     if l < length_threshold:
                         indices_to_del_length.append(index + 1)
-            cumulative_angle = 0
+
+            cumulative = 0
+            indices_to_keep_cumulative =[]
+
             for i in Dual_G.edges(data=True):
                 angle = i[2]['angular_change']
-                if angle < angular_threshold:
-                    cumulative_angle += angle
-                    if cumulative_angle < 90:
-                        intersection = set(i[0]).intersection(i[1])
-                        indices_to_del_angle.append(list(intersection)[0])
-                    else:
-                         cumulative_angle = 0
-            indices_to_keep = [x for x in range(len(f_geom.asPolyline()) - 1)]
-            for i in indices_to_del_angle:
-                indices_to_keep.remove(i)
-            for i in indices_to_del_length:
-                if i in indices_to_keep:
-                    indices_to_keep.remove(i)
-            if 0 not in indices_to_keep:
-                indices_to_keep.append(0)
-            if len(f_geom.asPolyline()) - 1 not in indices_to_keep:
-                indices_to_keep.append(len(f_geom.asPolyline()) - 1)
+                if angle < angular_threshold and cumulative < 10:
+                    intersection = set(i[0]).intersection(i[1])
+                    indices_to_del_angle.append(list(intersection)[0])
+                    cumulative += angle
+                elif angle < angular_threshold and cumulative > 10:
+                    intersection = set(i[0]).intersection(i[1])
+                    indices_to_keep_cumulative.append(list(intersection)[0])
+                    cumulative = 0
+                elif angle > angular_threshold and cumulative > 10:
+                    intersection = set(i[0]).intersection(i[1])
+                    indices_to_keep_cumulative.append(list(intersection)[0])
+                    cumulative = 0
+                elif angle > angular_threshold and cumulative < 10:
+                    cumulative += angle
+
+            all_indices = [x for x in range(len(f_geom.asPolyline()) - 1)]
+            indices_to_keep = list(set(all_indices) - set(indices_to_del_angle) - set(indices_to_del_length))
+            indices_to_keep.append(0)
+            indices_to_keep.append(len(f_geom.asPolyline()) - 1)
+            indices_to_keep = list(indices_to_keep) + indices_to_keep_cumulative
+            indices_to_keep = list(set(indices_to_keep))
             indices_to_keep.sort()
+
             new_pl = []
             if len(indices_to_keep) == len(f_geom.asPolyline()):
-                Copy[feature.id()] = feature
+                Copy[f.id()] = f
             else:
                 for i in indices_to_keep:
                     p = QgsPoint(f_geom.asPolyline()[i])
@@ -71,10 +78,10 @@ def simplify_angle(network, angular_threshold, length_threshold):
                 if new_geom.isGeosValid():
                     new_feat = QgsFeature()
                     new_feat.setGeometry(new_geom)
-                    new_feat.setAttributes(feature.attributes())
-                    New[feature.id()] = new_feat
+                    new_feat.setAttributes(f.attributes())
+                    New[f.id()] = new_feat
         else:
-            Copy[feature.id()] = feature
+            Copy[f.id()] = f
 
     network.startEditing()
     network.removeSelection()
