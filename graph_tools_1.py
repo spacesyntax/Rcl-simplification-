@@ -8,6 +8,7 @@ from itertools import izip as zip, count  # izip for maximum efficiency
 from PyQt4.QtCore import QVariant, QFileInfo
 import os.path
 
+
 # depthmap uses a precision of 6 decimals
 # find equivalent to mm precision or use depthmap default precision
 # number_decimals = 6
@@ -27,8 +28,6 @@ def keep_decimals(number, number_decimals):
 # add unique feature id column
 # now it has been manually added ('feat_id')
 
-
-# TODO: error when col_name already exists
 
 def update_feat_id_col(shp_path):
     shp = QgsVectorLayer( shp_path, "network", "ogr")
@@ -52,7 +51,8 @@ def update_feat_id_col(shp_path):
 # this changes the raw data
 
 
-def break_multiparts(shp):
+def break_multiparts(shp_path):
+    shp = QgsVectorLayer( shp_path, "network", "ogr")
     feat_to_del = []
     for f in shp.getFeatures():
         f_geom_type = f.geometry().wkbType()
