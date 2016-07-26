@@ -28,6 +28,7 @@ def pl_midpoint(pl_geom):
             break
     return midpoint
 
+
 def add_column(v_layer, col_name, col_type):
     pr = v_layer.dataProvider()
     v_layer.startEditing()
@@ -36,6 +37,8 @@ def add_column(v_layer, col_name, col_type):
 
 
 def dual_to_shp(network,dual_graph):
+
+    # TODO: some of the centroids are not correct
     centroids = {i.id(): pl_midpoint(i.geometry()) for i in network.getFeatures()}
 
     # new point layer with centroids
@@ -47,7 +50,7 @@ def dual_to_shp(network,dual_graph):
     pr.addAttributes([QgsField("id", QVariant.Int)])
     points.commitChanges()
 
-    id = int(-1)
+    id = int(0)
     features = []
     for i in centroids.values():
         feat = QgsFeature()
@@ -66,19 +69,21 @@ def dual_to_shp(network,dual_graph):
     QgsMapLayerRegistry.instance().addMapLayer(lines)
     pr = lines.dataProvider()
     lines.startEditing()
-    pr.addAttributes([QgsField("id", QVariant.Int)])
+    pr.addAttributes([QgsField("id", QVariant.Int), QgsField("cost",QVariant.Int)])
     lines.commitChanges()
 
     id = -1
     New_feat = []
-    for i in dual_graph.edges():
+    for i in dual_graph.edges(data='cost'):
         id += 1
         new_feat = QgsFeature()
         new_geom = QgsGeometry.fromPolyline([QgsPoint(centroids[i[0]][0],centroids[i[0]][1]),QgsPoint(centroids[i[1]][0],centroids[i[1]][1])])
         new_feat.setGeometry(new_geom)
-        new_feat.setAttributes([id])
+        new_feat.setAttributes([id,i[2]])
         New_feat.append(new_feat)
 
     lines.startEditing()
     pr.addFeatures(New_feat)
     lines.commitChanges()
+    
+    return centroids

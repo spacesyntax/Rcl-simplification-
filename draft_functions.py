@@ -155,3 +155,33 @@ def graphs_intersection(dual_graph_1, dual_graph_2):
         if dual_graph_1.degree(node) > dual_graph_2.degree(node):
             lines_inter.append(node)
     return lines_inter
+
+
+
+''' # alter dual graph
+    # multiple nodes become one node
+    # change of geometry, change of attribute
+    # transformation log
+    # node [geometry] : merged node [ return same id if not merged] / merged node [geometry] : multiple nodes
+
+    dual_graph_output = nx.MultiGraph(dual_graph_input)
+    nodes_to_remove = []
+    new_edges = []
+    merged_geoms_dict = {i: j for i, j in merged_geoms.items() if len(i) != 1}
+    nodes_to_merged_nodes = {}
+    for k, v in merged_geoms_dict.items():
+        for item in k:
+            nodes_to_merged_nodes[item] = v['id']
+    for k, v in merged_geoms_dict.items():
+        nodes_to_remove += [node for node in k]
+        neighbours = dual_graph_input.neighbors(k[0]) + dual_graph_input.neighbors(k[-1])
+        new_neighbours =[]
+        for x in neighbours:
+            if x in nodes_to_merged_nodes.keys():
+                new_neighbours.append(nodes_to_merged_nodes[x])
+            else:
+                new_neighbours.append(x)
+        new_edges += [(x, v['id']) for x in new_neighbours]
+
+    dual_graph_output.remove_nodes_from(nodes_to_remove)
+    dual_graph_output.add_edges_from(new_edges)'''
