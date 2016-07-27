@@ -41,24 +41,21 @@ def geom_snapped(qgs_geometry,number_decimals):
 
 
 # add unique feature id column or update
-def update_feat_id_col(shp, col_name, start=0):
+def update_feat_id_col(shp, col_name, start):
     pr = shp.dataProvider()
     fieldIdx = shp.dataProvider().fields().indexFromName(col_name)
     if fieldIdx == -1:
         pr.addAttributes([QgsField(col_name, QVariant.Int)])
         fieldIdx = shp.dataProvider().fields().indexFromName(col_name)
-
     fid = 1
+    updateMap = {}
     if start == 0:
-        updateMap = {}
         for f in shp.dataProvider().getFeatures():
             updateMap[f.id()] = {fieldIdx: f.id()}
     elif start == 1:
-        updateMap = {}
         for f in shp.dataProvider().getFeatures():
             updateMap[f.id()] = {fieldIdx: fid}
             fid+=1
-
     shp.dataProvider().changeAttributeValues(updateMap)
 
 

@@ -8,6 +8,7 @@ list = [ feat for feat in layer.getFeatures( request ) ]
 
 
 # processing.runalg('qgis:deleteduplicategeometries', input, output)
+# line = QgsMapLayerRegistry.instance().mapLayersByName('line')[0]
 
 # reference: http://stackoverflow.com/questions/30770776/networkx-how-to-create-multidigraph-from-shapefile
 
