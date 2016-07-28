@@ -28,8 +28,9 @@ import resources
 from rcl_simplification_dialog import RclSimplificationDialog
 import os.path
 import graph_tools_1
-import graph_tools_2
-
+from qgis.utils import *
+from PyQt4.QtCore import *
+from qgis.core import *
 
 class RclSimplification:
     """QGIS Plugin Implementation."""
@@ -71,7 +72,8 @@ class RclSimplification:
         self.toolbar.setObjectName(u'RclSimplification')
 
         # setup GUI signals
-
+        self.dlg.run1.clicked.connect(self.simplifyAngle)
+        self.dlg.run2.clicked.connect(self.simplifyInter)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -172,6 +174,23 @@ class RclSimplification:
             callback=self.run,
             parent=self.iface.mainWindow())
 
+    # copied from https://github.com/OpenDigitalWorks/CatchmentAnalyser/blob/master/utility_functions.py
+    def getLegendLayersNames(iface, geom='all', provider='all'):
+        """geometry types: 0 point; 1 line; 2 polygon; 3 multipoint; 4 multiline; 5 multipolygon"""
+        layers_list = []
+        for layer in iface.legendInterface().layers():
+            add_layer = False
+            if layer.isValid() and layer.type() == QgsMapLayer.VectorLayer:
+                if layer.hasGeometryType() and (geom is 'all' or layer.geometryType() in geom):
+                    if provider is 'all' or layer.dataProvider().name() in provider:
+                        add_layer = True
+            if add_layer:
+                layers_list.append(layer.name())
+        return layers_list
+
+    def updateInputLayers(self):
+        network_layers = self.getLegendLayersNames(iface, geom=[1, ], provider='all')
+        self.dlg.setNetworkLayers(network_layers)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -190,6 +209,7 @@ class RclSimplification:
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
+        self.updateInputLayers()
         # See if OK was pressed
         if result:
             # Do something useful here - delete the line containing pass and

@@ -43,12 +43,14 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         # GUI signals
         self.outputText1.setPlaceholderText("Save as temporary layer...")
         self.outputText2.setPlaceholderText("Save as temporary layer...")
-        self.browseOutput1.clicked.connect(self.setBrowseOutput)
-        self.browseOutput2.clicked.connect(self.setBrowseOutput)
+        self.browseOutput1.clicked.connect(self.setOutput1)
+        self.browseOutput2.clicked.connect(self.setOutput2)
 
         # Setup the progress bar
-        self.analysisProgress.setMinimum(0)
-        self.analysisProgress.setMaximum(100)
+        self.progressBar1.setMinimum(0)
+        self.progressBar1.setMaximum(100)
+        self.progressBar2.setMinimum(0)
+        self.progressBar2.setMaximum(100)
 
         def setNetworkLayers(self, names):
             layers = ['-----']
@@ -57,39 +59,59 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
                 layers.extend(names)
             self.inputCombo1.clear()
             self.inputCombo1.addItems(layers)
+            self.inputCombo2.clear()
+            self.inputCombo2.addItems(layers)
 
-        def getNetwork(self):
+        def getNetwork1(self):
             return self.inputCombo1.currentText()
+
+        def getNetwork2(self):
+            return self.inputCombo2.currentText()
 
         def setDecimals(self):
             if self.snapTickBox1.isChecked():
                 self.costCombo.setEnabled(True)
 
         def getDecimals(self):
+            # TODO: find equivalent to mm for provided crs
             if self.snapTickBox1.isChecked():
                 return self.dlg.decimalsSpin1.value()
             else:
                 return 0
 
         def getMinSegLen(self):
-            # TODO: find equivalent to mm for provided crs
             return self.dlg.minSegLenSpin.value()
 
         def getMinAngleDev(self):
-            # TODO: find equivalent to mm for provided crs
             return self.dlg.minAngleDevSpin.value()
 
         def getMaxAngleDev(self):
-            # TODO: find equivalent to mm for provided crs
             return self.dlg.maxAngleDevSpin.value()
+
+        def getInterDist(self):
+            return self.dlg.interDistSpin.value()
+
+        def getMinLenDev(self):
+            return self.dlg.minLenDevSpin.value()
+
+        def getMaxLenDev(self):
+            return self.dlg.maxLenDevSpin.value()
 
         def setOutput1(self):
             file_name = QtGui.QFileDialog.getSaveFileName(self, "Save output file ", "simplified_angle", '*.shp')
             if file_name:
-                self.networkText.setText(file_name)
+                self.outputText1.setText(file_name)
+
+        def setOutput2(self):
+            file_name = QtGui.QFileDialog.getSaveFileName(self, "Save output file ", "simplified_inter", '*.shp')
+            if file_name:
+                self.outputText2.setText(file_name)
 
         def getOutput1(self):
             return self.outputText1.text()
+
+        def getOutput2(self):
+            return self.outputText2.text()
 
         def closeDialog(self):
             self.inputCombo1.clear()
@@ -109,6 +131,9 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
             self.minSegLenSpin.setValue(50)
             self.minAngleDevSpin.setValue(50)
             self.maxAngleDevSpin.setValue(50)
+
+            self.outputText1.clear()
+            self.outputText2.clear()
 
             self.progressBar1.reset()
             self.progressBar2.reset()
