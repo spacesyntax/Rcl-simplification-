@@ -39,3 +39,86 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+
+        # GUI signals
+        self.outputText1.setPlaceholderText("Save as temporary layer...")
+        self.outputText2.setPlaceholderText("Save as temporary layer...")
+        self.browseOutput1.clicked.connect(self.setBrowseOutput)
+        self.browseOutput2.clicked.connect(self.setBrowseOutput)
+
+        # Setup the progress bar
+        self.analysisProgress.setMinimum(0)
+        self.analysisProgress.setMaximum(100)
+
+        def setNetworkLayers(self, names):
+            layers = ['-----']
+            if names:
+                layers = []
+                layers.extend(names)
+            self.inputCombo1.clear()
+            self.inputCombo1.addItems(layers)
+
+        def getNetwork(self):
+            return self.inputCombo1.currentText()
+
+        def setDecimals(self):
+            if self.snapTickBox1.isChecked():
+                self.costCombo.setEnabled(True)
+
+        def getDecimals(self):
+            if self.snapTickBox1.isChecked():
+                return self.dlg.decimalsSpin1.value()
+            else:
+                return 0
+
+        def getMinSegLen(self):
+            # TODO: find equivalent to mm for provided crs
+            return self.dlg.minSegLenSpin.value()
+
+        def getMinAngleDev(self):
+            # TODO: find equivalent to mm for provided crs
+            return self.dlg.minAngleDevSpin.value()
+
+        def getMaxAngleDev(self):
+            # TODO: find equivalent to mm for provided crs
+            return self.dlg.maxAngleDevSpin.value()
+
+        def setOutput1(self):
+            file_name = QtGui.QFileDialog.getSaveFileName(self, "Save output file ", "simplified_angle", '*.shp')
+            if file_name:
+                self.networkText.setText(file_name)
+
+        def getOutput1(self):
+            return self.outputText1.text()
+
+        def closeDialog(self):
+            self.inputCombo1.clear()
+            self.inputCombo1.setEnabled(False)
+            self.snapTickBox1.setCheckState(False)
+
+            self.inputCombo2.clear()
+            self.inputCombo2.setEnabled(False)
+            self.snapTickBox2.setCheckState(False)
+
+            self.decimalsSpin1.setValue(1)
+            self.minSegLenSpin.setValue(50)
+            self.minAngleDevSpin.setValue(50)
+            self.maxAngleDevSpin.setValue(50)
+
+            self.decimalsSpin2.setValue(1)
+            self.minSegLenSpin.setValue(50)
+            self.minAngleDevSpin.setValue(50)
+            self.maxAngleDevSpin.setValue(50)
+
+            self.progressBar1.reset()
+            self.progressBar2.reset()
+            self.close()
+
+
+
+
+
+
+
+
+

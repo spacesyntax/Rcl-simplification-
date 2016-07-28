@@ -13,6 +13,8 @@ shapefile = QgsVectorLayer(shp_path, "network", "ogr")
 # does it alter the feature id?
 update_feat_id_col(shapefile, 'feat_id',start=0)
 
+QgsMapLayerRegistry.instance().addMapLayer(shapefile)
+
 # threshold: number decimals
 graph = read_shp_to_graph(shp_path)
 snapped = snap_graph(graph, 6)

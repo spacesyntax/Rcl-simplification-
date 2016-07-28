@@ -188,35 +188,4 @@ def simplify_intersection_geoms(shp_path, short_lines_neighbours, graph):
 
 
 def clean_network(network, length_max_threshold, length_min_threshold):
-D = {elem.id():[elem.geometry().asPolyline()[0], elem.geometry().asPolyline()[-1], elem.geometry().length()] for elem in network.getFeatures()}
-
-two_ends = []
-
-for k, v in D.items():
-    id = k
-    p0 = v[0]
-    p1 = v[1]
-    l = v[2]
-    for i, j in D.items():
-        if k > i:
-            id_s = i
-            p0_s = j[0]
-            p1_s = j[1]
-            l_s = j[2]
-            # a condition for not having double pairs eg [a,b] and [b,a]
-            if (p0 == p0_s and p1 == p1_s)  or (p0 == p1_s and p1 == p0_s):
-                # lines that will be paired should have approximately the same length
-                if abs(l - l_s) <= length_min_threshold:
-                    two_ends.append([id, id_s])
-
-        # unless average angular change is very different
-
-        two_ends_to_del = [i[0] for i in two_ends]
-
-        network.removeSelection()
-        network.select(two_ends_to_del)
-        network.startEditing()
-        network.deleteSelectedFeatures()
-        network.commitChanges()
-
     pass

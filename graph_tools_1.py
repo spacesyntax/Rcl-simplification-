@@ -58,6 +58,10 @@ def update_feat_id_col(shp, col_name, start):
             fid+=1
     shp.dataProvider().changeAttributeValues(updateMap)
 
+    if shp in Foreground_original.name()):
+        remove and
+        QgsMapLayerRegistry.instance().removeMapLayer(shp.name())
+
 
 # TODO: add networkx function
 

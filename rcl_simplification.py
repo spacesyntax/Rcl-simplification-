@@ -70,6 +70,9 @@ class RclSimplification:
         self.toolbar = self.iface.addToolBar(u'RclSimplification')
         self.toolbar.setObjectName(u'RclSimplification')
 
+        # setup GUI signals
+
+
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
