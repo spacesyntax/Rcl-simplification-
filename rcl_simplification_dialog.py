@@ -45,6 +45,7 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         self.outputText2.setPlaceholderText("Save as temporary layer...")
         self.browseOutput1.clicked.connect(self.setOutput1)
         self.browseOutput2.clicked.connect(self.setOutput2)
+        # self.cancelButton.clicked.connect(self.closeDialog)
 
         # Setup the progress bar
         self.progressBar1.setMinimum(0)
@@ -52,92 +53,93 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         self.progressBar2.setMinimum(0)
         self.progressBar2.setMaximum(100)
 
-        def setNetworkLayers(self, names):
-            layers = ['-----']
-            if names:
-                layers = []
-                layers.extend(names)
-            self.inputCombo1.clear()
-            self.inputCombo1.addItems(layers)
-            self.inputCombo2.clear()
-            self.inputCombo2.addItems(layers)
 
-        def getNetwork1(self):
-            return self.inputCombo1.currentText()
+    def getNetwork1(self):
+        return self.inputCombo1.currentText()
 
-        def getNetwork2(self):
-            return self.inputCombo2.currentText()
+    def getNetwork2(self):
+        return self.inputCombo2.currentText()
 
-        def setDecimals(self):
-            if self.snapTickBox1.isChecked():
-                self.costCombo.setEnabled(True)
+    def getNetwork2(self):
+        return self.inputCombo2.currentText()
 
-        def getDecimals(self):
-            # TODO: find equivalent to mm for provided crs
-            if self.snapTickBox1.isChecked():
-                return self.dlg.decimalsSpin1.value()
-            else:
-                return 0
+    def setDecimals(self):
+        if self.snapTickBox1.isChecked():
+            self.costCombo.setEnabled(True)
 
-        def getMinSegLen(self):
-            return self.dlg.minSegLenSpin.value()
+    def getDecimals1(self):
+        # TODO: find equivalent to mm for provided crs
+        if self.snapTickBox1.isChecked():
+            return self.decimalsSpin1.value()
+        else:
+            return 0
 
-        def getMinAngleDev(self):
-            return self.dlg.minAngleDevSpin.value()
+    def getDecimals2(self):
+        # TODO: find equivalent to mm for provided crs
+        if self.snapTickBox2.isChecked():
+            return self.decimalsSpin2.value()
+        else:
+            return 0
 
-        def getMaxAngleDev(self):
-            return self.dlg.maxAngleDevSpin.value()
+    def getMinSegLen(self):
+        return self.minSegLenSpin.value()
 
-        def getInterDist(self):
-            return self.dlg.interDistSpin.value()
+    def getMinAngleDev(self):
+        return self.minAngleDevSpin.value()
 
-        def getMinLenDev(self):
-            return self.dlg.minLenDevSpin.value()
+    def getMaxAngleDev(self):
+        return self.maxAngleDevSpin.value()
 
-        def getMaxLenDev(self):
-            return self.dlg.maxLenDevSpin.value()
+    def getInterDist(self):
+        return self.interDistSpin.value()
 
-        def setOutput1(self):
-            file_name = QtGui.QFileDialog.getSaveFileName(self, "Save output file ", "simplified_angle", '*.shp')
-            if file_name:
-                self.outputText1.setText(file_name)
+    def getMinLenDev(self):
+        return self.minLenDevSpin.value()
 
-        def setOutput2(self):
-            file_name = QtGui.QFileDialog.getSaveFileName(self, "Save output file ", "simplified_inter", '*.shp')
-            if file_name:
-                self.outputText2.setText(file_name)
+    def getMaxLenDev(self):
+        return self.maxLenDevSpin.value()
 
-        def getOutput1(self):
-            return self.outputText1.text()
+    def setOutput1(self):
+        file_name = QtGui.QFileDialog.getSaveFileName(self, "Save output file ", "simplified_angle", '*.shp')
+        if file_name:
+            self.outputText1.setText(file_name)
 
-        def getOutput2(self):
-            return self.outputText2.text()
+    def setOutput2(self):
+        file_name = QtGui.QFileDialog.getSaveFileName(self, "Save output file ", "simplified_inter", '*.shp')
+        if file_name:
+            self.outputText2.setText(file_name)
 
-        def closeDialog(self):
-            self.inputCombo1.clear()
-            self.inputCombo1.setEnabled(False)
-            self.snapTickBox1.setCheckState(False)
+    def getOutput1(self):
+        return self.outputText1.text()
 
-            self.inputCombo2.clear()
-            self.inputCombo2.setEnabled(False)
-            self.snapTickBox2.setCheckState(False)
+    def getOutput2(self):
+        return self.outputText2.text()
 
-            self.decimalsSpin1.setValue(1)
-            self.minSegLenSpin.setValue(50)
-            self.minAngleDevSpin.setValue(50)
-            self.maxAngleDevSpin.setValue(50)
+    def closeDialog(self):
+        self.inputCombo1.clear()
+        self.inputCombo1.setEnabled(False)
+        self.snapTickBox1.setCheckState(False)
 
-            self.decimalsSpin2.setValue(1)
-            self.minSegLenSpin.setValue(50)
-            self.minAngleDevSpin.setValue(50)
-            self.maxAngleDevSpin.setValue(50)
+        self.inputCombo2.clear()
+        self.inputCombo2.setEnabled(False)
+        self.snapTickBox2.setCheckState(False)
 
-            self.outputText1.clear()
-            self.outputText2.clear()
+        self.decimalsSpin1.setValue(1)
+        self.minSegLenSpin.setValue(50)
+        self.minAngleDevSpin.setValue(50)
+        self.maxAngleDevSpin.setValue(50)
 
-            self.progressBar1.reset()
-            self.progressBar2.reset()
-            self.close()
+        self.decimalsSpin2.setValue(1)
+        self.minSegLenSpin.setValue(50)
+        self.minAngleDevSpin.setValue(50)
+        self.maxAngleDevSpin.setValue(50)
+
+        self.outputText1.clear()
+        self.outputText2.clear()
+
+        self.progressBar1.reset()
+        self.progressBar2.reset()
+        self.close()
 
 
 
