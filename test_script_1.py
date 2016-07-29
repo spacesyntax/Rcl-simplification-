@@ -26,7 +26,7 @@ dual_t = graph_to_dual(snapped, 'feat_id',inter_to_inter=True)
 # shp = iface.mapCanvas().currentLayer()
 # dual_to_shp(shp,dual_t)
 
-sets = merge_graph(dual_t,shp_path)
+sets = merge_graph(dual_t)
 merged_network, mg, snapped_merged = merge_geometries(sets, shp_path,6)
 
 
