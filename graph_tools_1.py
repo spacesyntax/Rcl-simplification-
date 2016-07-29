@@ -9,16 +9,15 @@ from PyQt4.QtCore import QVariant, QFileInfo
 import os.path
 
 
-# TODO: set global variables shp_path, number_decimals
-
 # depthmap uses a precision of 6 decimals
 # find equivalent to mm precision or use depthmap default precision
 # number_decimals = 6
+# TODO: if number_decimals is zero remove dot or work with integers
 def keep_decimals(number, number_decimals):
     integer_part = int(number)
     decimal_part = str(abs(int((number - integer_part)*(10**number_decimals))))
     if len(decimal_part) < number_decimals:
-        zeros = str(0)*(number_decimals-len(decimal_part))
+        zeros = str(0)*int((number_decimals-len(decimal_part)))
         decimal_part = zeros + decimal_part
     decimal = (str(integer_part) + '.' + decimal_part[0:number_decimals])
     if number < 0:
@@ -92,8 +91,6 @@ def read_shp_to_graph(shp_path):
 def snap_graph(graph, number_decimals):
     snapped_graph = nx.MultiGraph()
     edges = graph.edges(data=True)
-    # maybe not needed
-    getcontext().rounding = ROUND_DOWN
     snapped_edges = [((Decimal(keep_decimals(edge[0][0], number_decimals)), Decimal(keep_decimals(edge[0][1], number_decimals))), (Decimal(keep_decimals(edge[1][0], number_decimals)), Decimal(keep_decimals(edge[1][1],number_decimals))), edge[2]) for edge in edges]
     snapped_graph.add_edges_from(snapped_edges)
     return snapped_graph
@@ -127,11 +124,10 @@ def graph_to_dual(snapped_graph, id_column, inter_to_inter=False):
     return dual_graph
 
 
-def merge_graph(dual_graph_input,shp_path):
+def merge_graph(dual_graph_input):
     # 2. merge lines from intersection to intersection
     # Is there a grass function for QGIS 2.14???
     # sets of connected nodes (edges of primary graph)
-    shp = QgsVectorLayer(shp_path, "network", 'ogr')
     sets = []
     for j in connected_components(dual_graph_input):
         sets.append(list(j))
@@ -140,7 +136,7 @@ def merge_graph(dual_graph_input,shp_path):
         if len(set) > 2:
             edges = []
             for n in set:
-                if len(dual_graph_input.neighbors(n)) > 2 or len(dual_graph_input.neighbors(n))==1 :
+                if len(dual_graph_input.neighbors(n)) > 2 or len(dual_graph_input.neighbors(n)) == 1 :
                     edges.append(n)
                     # find all shortest paths and keep longest between edges
             if len(edges) == 0:
@@ -253,19 +249,22 @@ def break_graph(snapped_graph_merged, merged_network):
             inter_lines[i[0]].append(i[1])
 
 
-    snap_dual_merged = graph_to_dual(snapped_graph_merged, 'feat_id_2', inter_to_inter=True)
-    # find nodes of dual graph connected to other nodes
+    snap_dual_merged = graph_to_dual(snapped_graph_merged, 'feat_id_2', inter_to_inter=False)
+    #find nodes of dual graph connected to other nodes
     con_nodes = {k: v.keys() for k, v in snap_dual_merged.adjacency_iter()}
     for k, v in con_nodes.items():
         for item in v:
-            inter_lines[k].remove(item)
+            if item not in inter_lines[k]:
+                print item, inter_lines[k]
+            else:
+                inter_lines[k].remove(item)
 
     for k, v in inter_lines.items():
         if k in con_nodes.keys():
             if k not in con_nodes[k]:
                 v.remove(k)
 
-    return inter_lines
+    return inter_lines, snap_dual_merged
 
 
 def break_geometries(inter_lines, merged_network, snapped_graph_merged, number_decimals):
@@ -423,5 +422,4 @@ def write_shp(broken_network, shp_path):
     network_to_break = QgsVectorLayer(shp_path_to_write, "network_to_break", "ogr")
     network_to_break.updateFields()
     network_to_break.dataProvider().addFeatures([x for x in broken_network.getFeatures()])
-    QgsMapLayerRegistry.instance().addMapLayer(network_to_break)
     return shp_path_to_write
