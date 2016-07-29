@@ -3,7 +3,7 @@ import networkx as nx
 from qgis.core import *
 import itertools
 import math
-#from graph_tools_1 import keep_decimals
+from graph_tools_1 import keep_decimals
 from decimal import *
 
 
