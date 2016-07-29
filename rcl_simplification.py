@@ -27,10 +27,23 @@ import resources
 # Import the code for the dialog
 from rcl_simplification_dialog import RclSimplificationDialog
 import os.path
-import graph_tools_1
+import graph_tools_1 as gt
+import simplify_angle as sa
+import simplify_intersections as si
 from qgis.utils import *
-from PyQt4.QtCore import *
+from PyQt4.QtCore import QVariant, QFileInfo
 from qgis.core import *
+
+# Import the debug library
+# set is_debug to False in release version
+is_debug = False
+try:
+    import pydevd
+    has_pydevd = False
+except ImportError, e:
+    has_pydevd = False
+    is_debug = False
+
 
 class RclSimplification:
     """QGIS Plugin Implementation."""
@@ -70,6 +83,11 @@ class RclSimplification:
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'RclSimplification')
         self.toolbar.setObjectName(u'RclSimplification')
+
+        # Setup debugger
+        if has_pydevd and is_debug:
+            pydevd.settrace('localhost', port=53100, stdoutToServer=True, stderrToServer=True, suspend=True)
+
 
         # setup GUI signals
         self.dlg.run1.clicked.connect(self.simplifyAngle)
@@ -174,23 +192,115 @@ class RclSimplification:
             callback=self.run,
             parent=self.iface.mainWindow())
 
-    # copied from https://github.com/OpenDigitalWorks/CatchmentAnalyser/blob/master/utility_functions.py
-    def getLegendLayersNames(iface, geom='all', provider='all'):
-        """geometry types: 0 point; 1 line; 2 polygon; 3 multipoint; 4 multiline; 5 multipolygon"""
-        layers_list = []
-        for layer in iface.legendInterface().layers():
-            add_layer = False
-            if layer.isValid() and layer.type() == QgsMapLayer.VectorLayer:
-                if layer.hasGeometryType() and (geom is 'all' or layer.geometryType() in geom):
-                    if provider is 'all' or layer.dataProvider().name() in provider:
-                        add_layer = True
-            if add_layer:
-                layers_list.append(layer.name())
-        return layers_list
+    def getInput1(self):
+        name = self.dlg.getNetwork1()
+        layer = None
+        for i in self.iface.legendInterface().layers():
+            if i.name() == name:
+                layer = i
+        return layer
 
-    def updateInputLayers(self):
-        network_layers = self.getLegendLayersNames(iface, geom=[1, ], provider='all')
-        self.dlg.setNetworkLayers(network_layers)
+    def getInput2(self):
+        name = self.dlg.getNetwork2()
+        layer = None
+        for i in self.iface.legendInterface().layers():
+            if i.name() == name:
+                layer = i
+        return layer
+
+    def getSimplifyAngleSettings(self):
+
+        settings_angle = {}
+        settings_angle['network'] = self.getInput1()
+        # settings_angle['snapped'] = self.dlg.snapTickBox1.isChecked()
+        settings_angle['decimal precision'] = self.dlg.getDecimals1()
+        settings_angle['min seg length'] = self.dlg.getMinSegLen()
+        settings_angle['min angle dev'] = self.dlg.getMinAngleDev()
+        settings_angle['max angle dev'] = self.dlg.getMaxAngleDev()
+        settings_angle['output1'] = self.dlg.getOutput1()
+
+        return settings_angle
+
+    def getSimplifyInterSettings(self):
+
+        settings_inter= {}
+        settings_inter['network'] = self.getInput2()
+        # settings_angle['snapped'] = self.dlg.snapTickBox1.isChecked()
+        settings_inter['decimal precision'] = self.dlg.getDecimals2()
+        settings_inter['intersection distance'] = self.dlg.getInterDist()
+        settings_inter['min length dev'] = self.dlg.getMinLenDev()
+        settings_inter['max length dev'] = self.dlg.getMaxLenDev()
+        settings_inter['output1'] = self.dlg.getOutput2()
+
+        return settings_inter
+
+
+    def simplifyAngle(self):
+
+        settings_angle = self.getSimplifyAngleSettings()
+        input1_uri = settings_angle['network'].dataProvider().dataSourceUri()
+        input1_path = os.path.dirname(input1_uri) + "/" + QFileInfo(input1_uri).baseName() + ".shp"
+
+        n_decimals = int(settings_angle['decimal precision'])
+        graph = gt.read_shp_to_graph(input1_path)
+        snapped = gt.snap_graph(graph, n_decimals)
+
+        dual_t = gt.graph_to_dual(snapped, 'feat_id', inter_to_inter=True)
+        sets = gt.merge_graph(dual_t)
+        merged_network, mg, snapped_merged = gt.merge_geometries(sets, input1_path, n_decimals)
+
+        inter_lines, f = gt.break_graph(snapped_merged, merged_network)
+        broken_network, lines_ind_to_break, snapped_graph_broken = gt.break_geometries(inter_lines, merged_network, snapped_merged,n_decimals)
+
+        sa.simplify_angle(broken_network, settings_angle['min angle dev'], settings_angle['min seg length'])
+
+    def simplifyInter(self):
+        settings_inter = self.getSimplifyInterSettings()
+        input2_uri = settings_inter['network'].dataProvider().dataSourceUri()
+        input2_path = os.path.dirname(input2_uri) + "/" + QFileInfo(input2_uri).baseName() + ".shp"
+
+        n_decimals = int(settings_inter['decimal precision'])
+        graph = gt.read_shp_to_graph(input2_path)
+        snapped = gt.snap_graph(graph, n_decimals)
+
+        dual_t = gt.graph_to_dual(snapped, 'feat_id', inter_to_inter=True)
+        sets = gt.merge_graph(dual_t)
+        merged_network, mg, snapped_merged = gt.merge_geometries(sets, input2_path, n_decimals)
+
+        inter_lines, f = gt.break_graph(snapped_merged, merged_network)
+        broken_network, lines_ind_to_break, snapped_graph_broken = gt.break_geometries(inter_lines, merged_network,
+                                                                                       snapped_merged, n_decimals)
+
+        shp_path = gt.write_shp(broken_network, input2_path)
+        print shp_path
+
+        broken_network = QgsVectorLayer(shp_path, "broken_network", "ogr")
+        gt.update_feat_id_col(broken_network, 'feat_id_3', start=0)
+        broken_network = QgsVectorLayer(shp_path, "broken_network", "ogr")
+
+        QgsMapLayerRegistry.instance().addMapLayer(broken_network)
+
+        graph = gt.read_shp_to_graph(shp_path)
+        snapped_graph_broken = gt.snap_graph(graph, 6)
+        l = si.get_nodes_coord(snapped_graph_broken)
+        points, point_ids_coords = si.make_points_from_shp(shp_path, l)
+        neighbors = si.find_closest_points(points)
+
+        inter_distance_threshold = settings_inter['intersection distance']
+
+        edge_list = si.find_not_connected_nodes(broken_network, snapped_graph_broken, neighbors, inter_distance_threshold,point_ids_coords)
+        snapped_graph_broken.add_edges_from(edge_list)
+
+        ids_short = si.find_short_edges(snapped_graph_broken, inter_distance_threshold)
+
+        dual3 = gt.graph_to_dual(snapped_graph_broken, 'feat_id_3',inter_to_inter=False)  # short_edges_dual = dual3.subgraph(ids_short)
+        short_edges_dual = dual3.subgraph(ids_short)
+        short_lines_neighbours = si.find_connected_subgraphs(dual3, short_edges_dual)
+        h = short_lines_neighbours
+        short_lines_neighbours = {k: v for k, v in h.items() if len(v) != 0}
+
+        d, m, c = si.simplify_intersection_geoms(shp_path, short_lines_neighbours,snapped_graph_broken)
+
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -203,15 +313,29 @@ class RclSimplification:
         del self.toolbar
 
 
+    def getActiveLayers(self):
+        layers_list = []
+        for layer in self.iface.legendInterface().layers():
+            if layer.isValid() and (layer.wkbType() == 2 or layer.wkbType() == 5):
+                layers_list.append(layer.name())
+        self.dlg.inputCombo1.clear()
+        self.dlg.inputCombo2.clear()
+        self.dlg.inputCombo1.addItems(layers_list)
+        self.dlg.inputCombo2.addItems(layers_list)
+
+
     def run(self):
         """Run method that performs all the real work"""
         # show the dialog
         self.dlg.show()
+        self.getActiveLayers()
+
         # Run the dialog event loop
         result = self.dlg.exec_()
-        self.updateInputLayers()
         # See if OK was pressed
         if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             pass
+
+
