@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>348</width>
-    <height>434</height>
+    <width>289</width>
+    <height>348</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,7 +23,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -84,24 +84,11 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_66">
-           <property name="text">
-            <string>decimals precision</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="0" colspan="3">
           <widget class="QComboBox" name="inputCombo1"/>
          </item>
          <item row="5" column="2">
           <widget class="QDoubleSpinBox" name="minSegLenSpin">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -163,6 +150,13 @@
           <widget class="QDoubleSpinBox" name="decimalsSpin1">
            <property name="decimals">
             <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QLabel" name="label_66">
+           <property name="text">
+            <string>snap endpoints precision</string>
            </property>
           </widget>
          </item>
@@ -256,13 +250,6 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_67">
-           <property name="text">
-            <string>decimals precision</string>
-           </property>
-          </widget>
-         </item>
          <item row="10" column="2">
           <widget class="QPushButton" name="browseOutput2">
            <property name="text">
@@ -320,6 +307,13 @@
           <widget class="QLabel" name="label_61">
            <property name="text">
             <string>intersection distance</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QLabel" name="label_67">
+           <property name="text">
+            <string>snap endpoints precision</string>
            </property>
           </widget>
          </item>
