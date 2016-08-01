@@ -25,20 +25,6 @@ def keep_decimals(number, number_decimals):
     return decimal
 
 
-# keep n decimals for a pair of coordinates
-def coord(coordinates,number_decimals):
-    return keep_decimals(coordinates,number_decimals)
-
-# TODO:return a geometry with decimals as coordinates of their vertices
-
-
-def geom_snapped(qgs_geometry,number_decimals):
-    points = [QgsPoint(Decimal(keep_decimals(vertex[0], number_decimals)),
-                            Decimal(keep_decimals(vertex[1], number_decimals))) for vertex in qgs_geometry.asPolyline()]
-    snapped_geom = QgsGeometry().fromPolyline(points)
-    return snapped_geom
-
-
 # add unique feature id column or update
 def update_feat_id_col(shp, col_name, start):
     pr = shp.dataProvider()
@@ -64,6 +50,39 @@ def update_feat_id_col(shp, col_name, start):
 # issue in windows (check which versions of networkx-works with the latest)
 
 # TODO: if the input layer is a memory layer then write the shp to local drive and after the process delete it
+def read_shp(shp, simplify=True, geom_attrs=True):
+
+    try:
+        from osgeo import ogr
+    except ImportError:
+        raise ImportError("read_shp requires OGR: http://www.gdal.org/")
+
+    net = nx.DiGraph()
+    for lyr in shp:
+        fields = [x.GetName() for x in lyr.schema]
+        for f in lyr:
+            flddata = [f.GetField(f.GetFieldIndex(x)) for x in fields]
+            g = f.geometry()
+            attributes = dict(zip(fields, flddata))
+            attributes["ShpName"] = lyr.GetName()
+            # Note:  Using layer level geometry type
+            if g.GetGeometryType() == ogr.wkbPoint:
+                net.add_node((g.GetPoint_2D(0)), attributes)
+            elif g.GetGeometryType() in (ogr.wkbLineString,
+                                         ogr.wkbMultiLineString):
+                for edge in edges_from_line(g, attributes, simplify,
+                                            geom_attrs):
+                    e1, e2, attr = edge
+                    net.add_edge(e1, e2)
+                    net[e1][e2].update(attr)
+            else:
+                raise ImportError("GeometryType {} not supported".
+                                  format(g.GetGeometryType()))
+
+    return net
+
+
+
 
 def read_shp_to_graph(shp_path):
     
