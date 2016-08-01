@@ -47,11 +47,41 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         self.browseOutput2.clicked.connect(self.setOutput2)
         # self.cancelButton.clicked.connect(self.closeDialog)
 
-        # Setup the progress bar
-        self.progressBar1.setMinimum(0)
-        self.progressBar1.setMaximum(100)
-        self.progressBar2.setMinimum(0)
-        self.progressBar2.setMaximum(100)
+        # Setups
+        #self.progressBar1.setMinimum(0)
+        #self.progressBar1.setMaximum(100)
+        #self.progressBar2.setMinimum(0)
+        #self.progressBar2.setMaximum(100)
+        self.decimalsSpin1.setDecimals(0)
+        self.decimalsSpin1.setRange(1,20)
+        self.decimalsSpin1.setSingleStep(1)
+        self.decimalsSpin1.setValue(6)
+        self.decimalsSpin2.setDecimals(0)
+        self.decimalsSpin2.setRange(1, 20)
+        self.decimalsSpin2.setSingleStep(1)
+        self.decimalsSpin2.setValue(6)
+        self.minSegLenSpin.setDecimals(4)
+        self.minSegLenSpin.setRange(0, 1000)
+        self.minSegLenSpin.setSingleStep(0.0001)
+        self.minAngleDevSpin.setDecimals(0)
+        self.minAngleDevSpin.setRange(0, 10)
+        self.minAngleDevSpin.setSingleStep(1)
+        self.minAngleDevSpin.setValue(5)
+        self.maxAngleDevSpin.setDecimals(0)
+        self.maxAngleDevSpin.setRange(0, 10)
+        self.maxAngleDevSpin.setSingleStep(1)
+        self.maxAngleDevSpin.setValue(10)
+        self.interDistSpin.setDecimals(4)
+        self.interDistSpin.setRange(0, 1000)
+        self.interDistSpin.setSingleStep(0.0001)
+        self.minLenDevSpin.setDecimals(1)
+        self.minLenDevSpin.setRange(0, 1000)
+        self.minLenDevSpin.setSingleStep(0.1)
+        self.minLenDevSpin.setValue(1.1)
+        self.maxLenDevSpin.setDecimals(1)
+        self.maxLenDevSpin.setRange(0, 1000)
+        self.maxLenDevSpin.setSingleStep(0.1)
+        self.maxLenDevSpin.setValue(1.4)
 
 
     def getNetwork1(self):
@@ -60,26 +90,13 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
     def getNetwork2(self):
         return self.inputCombo2.currentText()
 
-    def getNetwork2(self):
-        return self.inputCombo2.currentText()
-
-    def setDecimals(self):
-        if self.snapTickBox1.isChecked():
-            self.costCombo.setEnabled(True)
-
     def getDecimals1(self):
         # TODO: find equivalent to mm for provided crs
-        if self.snapTickBox1.isChecked():
-            return self.decimalsSpin1.value()
-        else:
-            return 0
+        return self.decimalsSpin1.value()
 
     def getDecimals2(self):
         # TODO: find equivalent to mm for provided crs
-        if self.snapTickBox2.isChecked():
-            return self.decimalsSpin2.value()
-        else:
-            return 0
+        return self.decimalsSpin2.value()
 
     def getMinSegLen(self):
         return self.minSegLenSpin.value()

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>362</width>
-    <height>456</height>
+    <width>348</width>
+    <height>434</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -29,23 +29,13 @@
       <attribute name="title">
        <string>1. Angle</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="1" column="0">
-          <widget class="QComboBox" name="inputCombo1"/>
-         </item>
-         <item row="8" column="0">
-          <widget class="Line" name="line_5">
+         <item row="11" column="0" colspan="3">
+          <widget class="Line" name="line_4">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_36">
-           <property name="text">
-            <string>Network to be simplified </string>
            </property>
           </widget>
          </item>
@@ -56,8 +46,107 @@
            </property>
           </widget>
          </item>
-         <item row="11" column="0">
-          <widget class="Line" name="line_4">
+         <item row="10" column="0" colspan="2">
+          <widget class="QLineEdit" name="outputText1"/>
+         </item>
+         <item row="6" column="2">
+          <widget class="QDoubleSpinBox" name="minAngleDevSpin">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="2">
+          <widget class="QPushButton" name="browseOutput1">
+           <property name="text">
+            <string>....</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_46">
+           <property name="text">
+            <string>angle deviation</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="2">
+          <widget class="QDoubleSpinBox" name="maxAngleDevSpin">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_36">
+           <property name="text">
+            <string>Network to be simplified </string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_66">
+           <property name="text">
+            <string>decimals precision</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="3">
+          <widget class="QComboBox" name="inputCombo1"/>
+         </item>
+         <item row="5" column="2">
+          <widget class="QDoubleSpinBox" name="minSegLenSpin">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="2">
+          <widget class="QLabel" name="label_54">
+           <property name="text">
+            <string>minimum segment length</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0" colspan="3">
+          <widget class="Line" name="line_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QLabel" name="label_47">
+           <property name="text">
+            <string>min</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QLabel" name="label_44">
+           <property name="text">
+            <string>max</string>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="2">
+          <widget class="QPushButton" name="run1">
+           <property name="layoutDirection">
+            <enum>Qt::RightToLeft</enum>
+           </property>
+           <property name="text">
+            <string>Run</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="3">
+          <widget class="Line" name="line_6">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
@@ -70,167 +159,12 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="Line" name="line_6">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+         <item row="2" column="2">
+          <widget class="QDoubleSpinBox" name="decimalsSpin1">
+           <property name="decimals">
+            <number>0</number>
            </property>
           </widget>
-         </item>
-         <item row="7" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_8">
-           <item>
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Preferred</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_24">
-             <item>
-              <widget class="QLabel" name="label_44">
-               <property name="text">
-                <string>max</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="maxAngleDevSpin">
-               <property name="decimals">
-                <number>4</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item row="12" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_7">
-           <item>
-            <widget class="QProgressBar" name="progressBar1">
-             <property name="value">
-              <number>24</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="run1">
-             <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="text">
-              <string>Run</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="6" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_13">
-           <item>
-            <widget class="QLabel" name="label_46">
-             <property name="text">
-              <string>angle deviation</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_25">
-             <item>
-              <widget class="QLabel" name="label_47">
-               <property name="text">
-                <string>min</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="minAngleDevSpin">
-               <property name="decimals">
-                <number>4</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item row="10" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_26">
-           <item>
-            <widget class="QLineEdit" name="outputText1"/>
-           </item>
-           <item>
-            <widget class="QPushButton" name="browseOutput1">
-             <property name="text">
-              <string>....</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="5" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QLabel" name="label_54">
-             <property name="text">
-              <string>minimum segment length</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="minSegLenSpin">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="decimals">
-              <number>4</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="2" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_44">
-           <item>
-            <widget class="QCheckBox" name="snapTickBox1">
-             <property name="text">
-              <string>snap endpoints</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_45">
-             <item>
-              <widget class="QLabel" name="label_66">
-               <property name="text">
-                <string>decimals precision</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="decimalsSpin1">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
          </item>
         </layout>
        </item>
@@ -242,200 +176,152 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <layout class="QGridLayout" name="gridLayout">
-         <item row="13" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_19">
-           <item>
-            <spacer name="horizontalSpacer_5">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Minimum</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_32">
-             <item>
-              <widget class="QLabel" name="label_62">
-               <property name="text">
-                <string>max</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="maxLenDevSpin">
-               <property name="decimals">
-                <number>1</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item row="14" column="0">
-          <widget class="Line" name="line_3">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="2" column="2">
+          <widget class="QDoubleSpinBox" name="decimalsSpin2">
+           <property name="decimals">
+            <number>0</number>
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Network to be simplified </string>
-           </property>
-          </widget>
-         </item>
-         <item row="15" column="0">
-          <widget class="QLabel" name="label_7">
-           <property name="text">
-            <string>Output location</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>Parameters</string>
-           </property>
-          </widget>
-         </item>
-         <item row="17" column="0">
+         <item row="11" column="0" colspan="3">
           <widget class="Line" name="line_7">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="Line" name="line_18">
+         <item row="6" column="1">
+          <widget class="QLabel" name="label_49">
+           <property name="text">
+            <string>min</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="0" colspan="2">
+          <widget class="QLineEdit" name="outputText2"/>
+         </item>
+         <item row="8" column="0" colspan="3">
+          <widget class="Line" name="line_8">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
-         <item row="16" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_20">
-           <item>
-            <widget class="QLineEdit" name="outputText2"/>
-           </item>
-           <item>
-            <widget class="QPushButton" name="browseOutput2">
-             <property name="text">
-              <string>....</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="9" column="0">
+          <widget class="QLabel" name="label_56">
+           <property name="text">
+            <string>Output location</string>
+           </property>
+          </widget>
          </item>
-         <item row="18" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_21">
-           <item>
-            <widget class="QProgressBar" name="progressBar2">
-             <property name="value">
-              <number>24</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="run2">
-             <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="text">
-              <string>Run</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_64">
+           <property name="text">
+            <string>length deviation </string>
+           </property>
+          </widget>
          </item>
-         <item row="5" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_18">
-           <item>
-            <widget class="QLabel" name="label_61">
-             <property name="text">
-              <string>intersection distance</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="interDistSpin">
-             <property name="decimals">
-              <number>4</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="7" column="2">
+          <widget class="QDoubleSpinBox" name="maxLenDevSpin">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+          </widget>
          </item>
-         <item row="12" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_42">
-           <item>
-            <widget class="QLabel" name="label_64">
-             <property name="text">
-              <string>length deviation </string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_43">
-             <item>
-              <widget class="QLabel" name="label_65">
-               <property name="text">
-                <string>min</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="minLenDevSpin">
-               <property name="decimals">
-                <number>1</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_37">
+           <property name="text">
+            <string>Network to be simplified </string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="3">
+          <widget class="Line" name="line_9">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Parameters</string>
+           </property>
+          </widget>
          </item>
          <item row="2" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_40">
-           <item>
-            <widget class="QCheckBox" name="snapTickBox2">
-             <property name="text">
-              <string>snap endpoints</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_41">
-             <item>
-              <widget class="QLabel" name="label_63">
-               <property name="text">
-                <string>decimals precision</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="decimalsSpin2">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
+          <widget class="QLabel" name="label_67">
+           <property name="text">
+            <string>decimals precision</string>
+           </property>
+          </widget>
          </item>
-         <item row="1" column="0">
+         <item row="10" column="2">
+          <widget class="QPushButton" name="browseOutput2">
+           <property name="text">
+            <string>....</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="2">
+          <widget class="QDoubleSpinBox" name="minLenDevSpin">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="3">
           <widget class="QComboBox" name="inputCombo2"/>
+         </item>
+         <item row="7" column="1">
+          <widget class="QLabel" name="label_45">
+           <property name="text">
+            <string>max</string>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="2">
+          <widget class="QPushButton" name="run2">
+           <property name="layoutDirection">
+            <enum>Qt::RightToLeft</enum>
+           </property>
+           <property name="text">
+            <string>Run</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="2">
+          <widget class="QDoubleSpinBox" name="interDistSpin">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="2">
+          <widget class="QLabel" name="label_61">
+           <property name="text">
+            <string>intersection distance</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
