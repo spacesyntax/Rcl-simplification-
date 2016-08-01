@@ -2,7 +2,7 @@ import math
 import networkx as nx
 from qgis.core import *
 
-def simplify_angle(network, angular_threshold, length_threshold):
+def simplify_angle(network, angular_threshold, length_threshold, cumulative_threshold):
 
     New = {}
     Copy = {}
@@ -44,19 +44,19 @@ def simplify_angle(network, angular_threshold, length_threshold):
 
             for i in Dual_G.edges(data=True):
                 angle = i[2]['angular_change']
-                if angle < angular_threshold and cumulative < 10:
+                if angle < angular_threshold and cumulative < cumulative_threshold:
                     intersection = set(i[0]).intersection(i[1])
                     indices_to_del_angle.append(list(intersection)[0])
                     cumulative += angle
-                elif angle < angular_threshold and cumulative > 10:
+                elif angle < angular_threshold and cumulative > cumulative_threshold:
                     intersection = set(i[0]).intersection(i[1])
                     indices_to_keep_cumulative.append(list(intersection)[0])
                     cumulative = 0
-                elif angle > angular_threshold and cumulative > 10:
+                elif angle > angular_threshold and cumulative > cumulative_threshold:
                     intersection = set(i[0]).intersection(i[1])
                     indices_to_keep_cumulative.append(list(intersection)[0])
                     cumulative = 0
-                elif angle > angular_threshold and cumulative < 10:
+                elif angle > angular_threshold and cumulative < cumulative_threshold:
                     cumulative += angle
 
             all_indices = [x for x in range(len(f_geom.asPolyline()) - 1)]

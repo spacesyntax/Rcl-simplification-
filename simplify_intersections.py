@@ -1,15 +1,16 @@
-from PyQt4.QtCore import QVariant
+import os
 import networkx as nx
 from qgis.core import *
 import itertools
 import math
-from graph_tools_1 import keep_decimals
+from graph_tools_1 import keep_decimals, read_shp_to_graph, snap_graph
 from decimal import *
+from collections import defaultdict
+from PyQt4.QtCore import QVariant, QFileInfo
 
 
 # save points - nodes in a temporary shp
 # get list of nodes of coordinates of the graph
-
 
 def get_nodes_coord(graph):
     list_coords = [i for i in graph.nodes()]
@@ -187,5 +188,68 @@ def simplify_intersection_geoms(shp_path, short_lines_neighbours, graph):
     return feat_to_del, feat_to_modify, ids_feat_copy
 
 
-def clean_network(network, length_max_threshold, length_min_threshold):
-    pass
+def clean_network(network, length_max_threshold, length_min_threshold,number_decimals):
+    # make graph
+    uri = network.dataProvider().dataSourceUri()
+    path = os.path.dirname(uri) + "/" + QFileInfo(uri).baseName() + ".shp"
+
+    # TODO: update column id
+
+    graph = read_shp_to_graph(path)
+    snapped = snap_graph(graph, number_decimals)
+
+    edges = [e for e in snapped.edges(data=True)]
+    edges_coord = [e for e in snapped.edges()]
+    edges_coord_rev = [e[::-1]for e in snapped.edges()]
+
+    # exclude self loops if u==v
+
+    duplicates = defaultdict(list)
+    for i, item in enumerate(edges_coord):
+        duplicates[item].append(i)
+    duplicates = {k: v for k, v in duplicates.items() if len(v) > 1}
+
+    for common_edge in list(set(edges_coord).intersection(edges_coord_rev)):
+        if not common_edge in duplicates.keys():
+            duplicates[common_edge]=[]
+        for x in [i for i, val in enumerate(edges_coord) if val == common_edge] + [i for i, val in enumerate(edges_coord_rev) if val == (common_edge[1],common_edge[0])]:
+            duplicates[common_edge].append(x)
+
+    duplicates_w_o_self_loops = {k: list(set(v)) for k, v in duplicates.items() if k[0]!=k[1]}
+    length_dict = {i.id():i.geometry().length() for i in network.getFeatures()}
+    for k, v in duplicates_w_o_self_loops.items():
+        ids = [edges[index][2]['feat_id'] for index in v]
+        duplicates_w_o_self_loops[k] = ids
+
+    pairs_to_check = {}
+    for k, v in duplicates_w_o_self_loops.items():
+        pairs_to_check[k]= []
+        for comb in itertools.combinations(v,2):
+            pairs_to_check[k].append(comb)
+
+    for k, combs in pairs_to_check.items():
+        common_pairs = [comb for comb in combs if (length_dict[comb[0]]>= length_dict[comb[1]]*length_min_threshold) or (length_dict[comb[0]] <= length_dict[comb[1]]*length_min_threshold)]
+        common = list(set([x for comb in common_pairs for x in comb]))
+        common_lengths = [length_dict[x] for x in common ]
+        common_sorted = [x for (y,x) in sorted(zip(common_lengths,common))]
+        pairs_to_check[k] = common_sorted[1::]
+
+    feat_to_del = [x for k, combs in pairs_to_check.items() for x in combs]
+
+    triangles = []
+    for edge in edges:
+        for node in snapped.neighbors(edge[0]) + snapped.neighbors(edge[1]):
+            if (snapped.has_edge(edge[0],node) or snapped.has_edge(node,edge[0])) and (snapped.has_edge(edge[1],node) or snapped.has_edge(node, edge[1])):
+                triangles.append([edge[0],edge[1],node])
+
+    for triangle in triangles:
+        # find edges
+        edges = [(triangle[0],triangle[1])]
+
+    #            ids =
+    #            lengths =
+
+    #for each edge(u, v):
+    #    for each vertex w:
+    #        if (v, w) is an edge and (w, u) is an edge:
+    #            return true
