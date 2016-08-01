@@ -252,7 +252,7 @@ class RclSimplification:
         inter_lines, f = gt.break_graph(snapped_merged, merged_network)
         broken_network, lines_ind_to_break, snapped_graph_broken = gt.break_geometries(inter_lines, merged_network, snapped_merged,n_decimals)
 
-        sa.simplify_angle(broken_network, settings_angle['min angle dev'], settings_angle['min seg length'])
+        sa.simplify_angle(broken_network, settings_angle['min angle dev'], settings_angle['min seg length'], settings_angle['max seg length'],)
 
     def simplifyInter(self):
         settings_inter = self.getSimplifyInterSettings()
@@ -272,7 +272,6 @@ class RclSimplification:
                                                                                        snapped_merged, n_decimals)
 
         shp_path = gt.write_shp(broken_network, input2_path)
-        print shp_path
 
         broken_network = QgsVectorLayer(shp_path, "broken_network", "ogr")
         gt.update_feat_id_col(broken_network, 'feat_id_3', start=0)
