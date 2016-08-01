@@ -56,10 +56,12 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         self.decimalsSpin1.setRange(1,20)
         self.decimalsSpin1.setSingleStep(1)
         self.decimalsSpin1.setValue(6)
+        self.decimalsSpin1.setSuffix(' decimals')
         self.decimalsSpin2.setDecimals(0)
         self.decimalsSpin2.setRange(1, 20)
         self.decimalsSpin2.setSingleStep(1)
         self.decimalsSpin2.setValue(6)
+        self.decimalsSpin2.setSuffix(' decimals')
         self.minSegLenSpin.setDecimals(4)
         self.minSegLenSpin.setRange(0, 1000)
         self.minSegLenSpin.setSingleStep(0.0001)
@@ -67,21 +69,25 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         self.minAngleDevSpin.setRange(0, 10)
         self.minAngleDevSpin.setSingleStep(1)
         self.minAngleDevSpin.setValue(5)
+        self.minAngleDevSpin.setSuffix(unichr(176))
         self.maxAngleDevSpin.setDecimals(0)
         self.maxAngleDevSpin.setRange(0, 10)
         self.maxAngleDevSpin.setSingleStep(1)
         self.maxAngleDevSpin.setValue(10)
+        self.maxAngleDevSpin.setSuffix(unichr(176))
         self.interDistSpin.setDecimals(4)
         self.interDistSpin.setRange(0, 1000)
         self.interDistSpin.setSingleStep(0.0001)
-        self.minLenDevSpin.setDecimals(1)
+        self.minLenDevSpin.setDecimals(0)
         self.minLenDevSpin.setRange(0, 1000)
-        self.minLenDevSpin.setSingleStep(0.1)
-        self.minLenDevSpin.setValue(1.1)
-        self.maxLenDevSpin.setDecimals(1)
+        self.minLenDevSpin.setSingleStep(1)
+        self.minLenDevSpin.setValue(10)
+        self.minLenDevSpin.setSuffix("%")
+        self.maxLenDevSpin.setDecimals(0)
         self.maxLenDevSpin.setRange(0, 1000)
-        self.maxLenDevSpin.setSingleStep(0.1)
-        self.maxLenDevSpin.setValue(1.4)
+        self.maxLenDevSpin.setSingleStep(1)
+        self.maxLenDevSpin.setValue(40)
+        self.maxLenDevSpin.setSuffix("%")
 
 
     def getNetwork1(self):
@@ -111,10 +117,10 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         return self.interDistSpin.value()
 
     def getMinLenDev(self):
-        return self.minLenDevSpin.value()
+        return (self.minLenDevSpin.value()/100) + 1
 
     def getMaxLenDev(self):
-        return self.maxLenDevSpin.value()
+        return (self.maxLenDevSpin.value()/100) + 1
 
     def setOutput1(self):
         file_name = QtGui.QFileDialog.getSaveFileName(self, "Save output file ", "simplified_angle", '*.shp')
