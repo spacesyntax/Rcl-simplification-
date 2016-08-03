@@ -7,8 +7,8 @@
                               -------------------
         begin                : 2016-06-20
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Ioanna Kolovou
-        email                : ioanna.kolovou@gmail.com 
+        copyright            : (C) 2016 by Space Syntax Limited, Ioanna Kolovou
+        email                : I.Kolovou@spacesyntax.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -79,10 +79,10 @@ class RclSimplification:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&RcL Simplification')
+        self.menu = self.tr(u'Space Syntax Toolkit')
         # TODO: We are going to let the user set this up in a future iteration
-        self.toolbar = self.iface.addToolBar(u'RclSimplification')
-        self.toolbar.setObjectName(u'RclSimplification')
+        self.toolbar = self.iface.addToolBar(u'Rcl Simplification')
+        self.toolbar.setObjectName(u'Rcl Simplification')
 
         # Setup debugger
         if has_pydevd and is_debug:
@@ -230,7 +230,7 @@ class RclSimplification:
         settings_inter['intersection distance'] = self.dlg.getInterDist()
         settings_inter['min length dev'] = self.dlg.getMinLenDev()
         settings_inter['max length dev'] = self.dlg.getMaxLenDev()
-        settings_inter['output1'] = self.dlg.getOutput2()
+        settings_inter['output2'] = self.dlg.getOutput2()
 
         return settings_inter
 
@@ -242,6 +242,10 @@ class RclSimplification:
         input1_path = os.path.dirname(input1_uri) + "/" + QFileInfo(input1_uri).baseName() + ".shp"
 
         n_decimals = int(settings_angle['decimal precision'])
+
+        network = QgsVectorLayer(input1_path,"network", "ogr")
+        gt.clean_cols(network)
+
         graph = gt.read_shp_to_graph(input1_path)
         snapped = gt.snap_graph(graph, n_decimals)
 
@@ -252,12 +256,23 @@ class RclSimplification:
         inter_lines, f = gt.break_graph(snapped_merged, merged_network)
         broken_network, lines_ind_to_break, snapped_graph_broken = gt.break_geometries(inter_lines, merged_network, snapped_merged,n_decimals)
 
-        sa.simplify_angle(broken_network, settings_angle['min angle dev'], settings_angle['min seg length'], settings_angle['max seg length'],)
+        QgsMapLayerRegistry.instance().removeMapLayer(merged_network.id())
+
+        sa.simplify_angle(broken_network, settings_angle['min angle dev'], settings_angle['min seg length'], settings_angle['max angle dev'])
+
+        if settings_angle['output1'] is not None:
+            saved_shp = gt.save_shp(broken_network, settings_angle['output1'])
+            QgsMapLayerRegistry.instance().removeMapLayer(broken_network.id())
+            QgsMapLayerRegistry.instance().addMapLayer(saved_shp)
+
 
     def simplifyInter(self):
         settings_inter = self.getSimplifyInterSettings()
         input2_uri = settings_inter['network'].dataProvider().dataSourceUri()
         input2_path = os.path.dirname(input2_uri) + "/" + QFileInfo(input2_uri).baseName() + ".shp"
+
+        network = QgsVectorLayer(input2_path, "network", "ogr")
+        gt.clean_cols(network)
 
         n_decimals = int(settings_inter['decimal precision'])
         graph = gt.read_shp_to_graph(input2_path)
@@ -272,6 +287,8 @@ class RclSimplification:
                                                                                        snapped_merged, n_decimals)
 
         shp_path = gt.write_shp(broken_network, input2_path)
+
+        QgsMapLayerRegistry.instance().removeMapLayer(broken_network.id())
 
         broken_network = QgsVectorLayer(shp_path, "broken_network", "ogr")
         gt.update_feat_id_col(broken_network, 'feat_id_3', start=0)
@@ -298,14 +315,30 @@ class RclSimplification:
         h = short_lines_neighbours
         short_lines_neighbours = {k: v for k, v in h.items() if len(v) != 0}
 
-        d, m, c = si.simplify_intersection_geoms(shp_path, short_lines_neighbours,snapped_graph_broken)
+        simplified_network = si.simplify_intersection_geoms(shp_path, short_lines_neighbours,snapped_graph_broken)
+
+        QgsMapLayerRegistry.instance().removeMapLayers([points.id(),merged_network.id(),broken_network.id()])
+
+        shp_path = gt.write_shp(simplified_network, input2_path)
+        simplified_network_saved = QgsVectorLayer(shp_path, "simplified_network", "ogr")
+        gt.update_feat_id_col(simplified_network_saved, 'feat_id', start=0)
+        simplified_network_saved = QgsVectorLayer(shp_path, "simplified_network", "ogr")
+
+        feat_to_del = si.clean_network(simplified_network_saved, settings_inter['max length dev'], settings_inter['min length dev'], settings_inter['decimal precision'])
+
+        simplified_network.dataProvider().deleteFeatures(feat_to_del)
+
+        if settings_inter['output2'] is not None:
+            saved_shp = gt.save_shp(simplified_network, settings_inter['output2'])
+            QgsMapLayerRegistry.instance().removeMapLayer(simplified_network.id())
+            QgsMapLayerRegistry.instance().addMapLayer(saved_shp)
 
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginVectorMenu(
-                self.tr(u'&RcL Simplification'),
+                self.menu,
                 action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar

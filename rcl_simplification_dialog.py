@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 /***************************************************************************
- RclSimplificationDialog
+ RclSimplification
                                  A QGIS plugin
  This plugin simplifies a rcl map to segment map
-                             -------------------
+                              -------------------
         begin                : 2016-06-20
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Ioanna Kolovou
-        email                : ioanna.kolovou@gmail.com 
+        copyright            : (C) 2016 by Space Syntax Limited, Ioanna Kolovou
+        email                : I.Kolovou@spacesyntax.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -20,7 +20,6 @@
  *                                                                         *
  ***************************************************************************/
 """
-
 import os
 
 from PyQt4 import QtGui, uic
