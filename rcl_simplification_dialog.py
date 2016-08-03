@@ -61,9 +61,11 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         self.decimalsSpin2.setSingleStep(1)
         self.decimalsSpin2.setValue(6)
         self.decimalsSpin2.setSuffix(' decimals')
-        self.minSegLenSpin.setDecimals(4)
-        self.minSegLenSpin.setRange(0, 1000)
-        self.minSegLenSpin.setSingleStep(0.0001)
+        self.minSegLenSpin.setDecimals(2)
+        self.minSegLenSpin.setRange(0, 20)
+        self.minSegLenSpin.setSingleStep(0.01)
+        self.minSegLenSpin.setSuffix(' m')
+        self.minSegLenSpin.setValue(5)
         self.minAngleDevSpin.setDecimals(0)
         self.minAngleDevSpin.setRange(0, 10)
         self.minAngleDevSpin.setSingleStep(1)
@@ -74,16 +76,18 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         self.maxAngleDevSpin.setSingleStep(1)
         self.maxAngleDevSpin.setValue(10)
         self.maxAngleDevSpin.setSuffix(unichr(176))
-        self.interDistSpin.setDecimals(4)
-        self.interDistSpin.setRange(0, 1000)
-        self.interDistSpin.setSingleStep(0.0001)
-        self.minLenDevSpin.setDecimals(0)
-        self.minLenDevSpin.setRange(0, 1000)
+        self.interDistSpin.setDecimals(2)
+        self.interDistSpin.setRange(0, 10)
+        self.interDistSpin.setSingleStep(0.01)
+        self.interDistSpin.setSuffix(' m')
+        self.interDistSpin.setValue(5.5)
+        self.minLenDevSpin.setDecimals(2)
+        self.minLenDevSpin.setRange(0, 100)
         self.minLenDevSpin.setSingleStep(1)
         self.minLenDevSpin.setValue(10)
         self.minLenDevSpin.setSuffix("%")
         self.maxLenDevSpin.setDecimals(0)
-        self.maxLenDevSpin.setRange(0, 1000)
+        self.maxLenDevSpin.setRange(0, 100)
         self.maxLenDevSpin.setSingleStep(1)
         self.maxLenDevSpin.setValue(40)
         self.maxLenDevSpin.setSuffix("%")
@@ -137,32 +141,25 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
     def getOutput2(self):
         return self.outputText2.text()
 
+    def closeEvent(self, QCloseEvent):
+        self.closeDialog()
+
     def closeDialog(self):
         self.inputCombo1.clear()
-        self.inputCombo1.setEnabled(False)
-        self.snapTickBox1.setCheckState(False)
-
         self.inputCombo2.clear()
-        self.inputCombo2.setEnabled(False)
-        self.snapTickBox2.setCheckState(False)
-
-        self.decimalsSpin1.setValue(1)
-        self.minSegLenSpin.setValue(50)
-        self.minAngleDevSpin.setValue(50)
-        self.maxAngleDevSpin.setValue(50)
-
-        self.decimalsSpin2.setValue(1)
-        self.minSegLenSpin.setValue(50)
-        self.minAngleDevSpin.setValue(50)
-        self.maxAngleDevSpin.setValue(50)
-
         self.outputText1.clear()
         self.outputText2.clear()
-
-        self.progressBar1.reset()
-        self.progressBar2.reset()
+        self.decimalsSpin1.setValue(6)
+        self.decimalsSpin2.setValue(6)
+        self.minSegLenSpin.setValue(0.000)
+        self.minAngleDevSpin.setValue(5)
+        self.maxAngleDevSpin.setValue(10)
+        self.interDistSpin.setValue(0.000)
+        self.minLenDevSpin.setValue(10)
+        self.maxLenDevSpin.setValue(40)
+        self.minSegLenSpin.setValue(5)
+        self.interDistSpin.setValue(5.5)
         self.close()
-
 
 
 
