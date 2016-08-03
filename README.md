@@ -10,7 +10,7 @@
 \paperw11900\paperh16840\margl1440\margr1440\vieww21180\viewh14980\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
 
-\f0\b\fs72 \cf0 Rcl Simplification \
+**Rcl Simplification**
 
 \f1\b0\fs24 \
 \
