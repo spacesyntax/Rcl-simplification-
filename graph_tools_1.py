@@ -1,3 +1,27 @@
+# -*- coding: utf-8 -*-
+"""
+/***************************************************************************
+ RclSimplification
+                                 A QGIS plugin
+ This plugin simplifies a rcl map to segment map
+                              -------------------
+        begin                : 2016-06-20
+        git sha              : $Format:%H$
+        copyright            : (C) 2016 by Space Syntax Limited, Ioanna Kolovou
+        email                : I.Kolovou@spacesyntax.com
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+"""
+
+
 import networkx as nx
 from networkx import connected_components
 import itertools
@@ -197,9 +221,9 @@ def merge_geometries(sets_in_order, shp_path, number_decimals):
     crs = shp.crs()
     merged_network = QgsVectorLayer('LineString?crs=' + crs.toWkt(), "merged_network", "memory")
     QgsMapLayerRegistry.instance().addMapLayer(merged_network)
-    merged_network.dataProvider().addAttributes([y for y in shp.dataProvider().fields()] + [QgsField('merged_f_id',QVariant.Int)] +[QgsField('feat_id_2',QVariant.Int)])
+    merged_network.dataProvider().addAttributes([y for y in shp.dataProvider().fields()] + [QgsField('merged_id',QVariant.Int)] +[QgsField('feat_id_2',QVariant.Int)])
     merged_network.updateFields()
-    column_names = [i.name() for i in shp.dataProvider().fields()] + ['merged_f_id']+['feat_id_2']
+    column_names = [i.name() for i in shp.dataProvider().fields()] + ['merged_id']+['feat_id_2']
     feat_id_index = column_names.index('feat_id')
     count = 1
     merged_features = []
@@ -333,9 +357,9 @@ def break_geometries(inter_lines, merged_network, snapped_graph_merged, number_d
                 new_broken_feat.append(new_feat)
 
     crs = merged_network.crs()
-    broken_network = QgsVectorLayer('LineString?crs=' + crs.toWkt(), "broken_network", "memory")
+    broken_network = QgsVectorLayer('LineString?crs=' + crs.toWkt(), "simplified_network", "memory")
     QgsMapLayerRegistry.instance().addMapLayer(broken_network)
-    broken_network.dataProvider().addAttributes([y for y in merged_network.dataProvider().fields()]+[QgsField('broken_f_id',QVariant.Int)]+[QgsField('feat_id_3',QVariant.Int)])
+    broken_network.dataProvider().addAttributes([y for y in merged_network.dataProvider().fields()]+[QgsField('broken_id',QVariant.Int)]+[QgsField('feat_id_3',QVariant.Int)])
     broken_network.updateFields()
     broken_network.startEditing()
     broken_network.addFeatures(new_broken_feat)
@@ -428,6 +452,7 @@ def break_multiparts(shp, snapped_graph, number_decimals):
     return snapped_graph
 
 
+#TODO: add name suffix
 def write_shp(broken_network, shp_path):
     shp_path_to_write = os.path.dirname(shp_path) + "/" + QFileInfo(shp_path).baseName() + "_merged.shp"
     # add a writer
@@ -442,3 +467,44 @@ def write_shp(broken_network, shp_path):
     network_to_break.updateFields()
     network_to_break.dataProvider().addFeatures([x for x in broken_network.getFeatures()])
     return shp_path_to_write
+
+def save_shp(shp, path):
+    # add a writer
+    provider = shp.dataProvider()
+    shp_writer = QgsVectorFileWriter(path, provider.encoding(), provider.fields(),
+                                                   provider.geometryType(), provider.crs(), "ESRI Shapefile")
+    if shp_writer.hasError() != QgsVectorFileWriter.NoError:
+        print "Error when creating shapefile: ", shp_writer.errorMessage()
+    del shp_writer
+    saved_shp = QgsVectorLayer(path, "simplified_network", "ogr")
+    saved_shp.updateFields()
+    saved_shp.dataProvider().addFeatures([x for x in shp.getFeatures()])
+    return saved_shp
+
+
+#TODO: clean columns
+
+def clean_cols(shp):
+    col_to_del = ['feat_id','merged_id','feat_id_2','broken_id','feat_id_3']
+    col_update = 'feat_id'
+    col_to_del_ind = [ shp.fieldNameIndex(col_name) for col_name in col_to_del]
+    shp.dataProvider().deleteAttributes(col_to_del_ind)
+    shp.dataProvider().addAttributes([QgsField(col_update, QVariant.Int)])
+    fieldIdx = shp.dataProvider().fields().indexFromName(col_update)
+    updateMap = {}
+    for f in shp.dataProvider().getFeatures():
+        updateMap[f.id()] = {fieldIdx: f.id()}
+    shp.dataProvider().changeAttributeValues(updateMap)
+
+
+#TODO: update layer on mapcanvas
+def updateLayer(shp_vector, shp_name):
+    ind = [id for id, layer in QgsMapLayerRegistry.instance().mapLayers().items() if layer.name() == shp_name]
+    QgsMapLayerRegistry.instance().removeMapLayer([ind])
+    QgsMapLayerRegistry.instance().addMapLayer(shp_vector)
+
+
+
+# what if it is a temp layer
+
+

@@ -1,3 +1,26 @@
+# -*- coding: utf-8 -*-
+"""
+/***************************************************************************
+ RclSimplification
+                                 A QGIS plugin
+ This plugin simplifies a rcl map to segment map
+                              -------------------
+        begin                : 2016-06-20
+        git sha              : $Format:%H$
+        copyright            : (C) 2016 by Space Syntax Limited, Ioanna Kolovou
+        email                : I.Kolovou@spacesyntax.com
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+"""
+
 import os
 import networkx as nx
 from qgis.core import *
@@ -93,13 +116,6 @@ def find_short_edges(primal_graph, inter_distance_threshold):
     return list(set(ids_short))
 
 
-# b = find_short_edges(graph, 0.0001)
-
-# construct a dual graph with all connections
-# dual = graph_to_dual(snapped_graph_broken, inter_to_inter=False)
-# short_edges_dual = dual.subgraph(ids_short)
-
-
 def find_connected_subgraphs(dual, short_edges_dual):
     short_lines_neighbours = {}
     connected_short_lines = [list(i) for i in nx.connected_components(short_edges_dual)]
@@ -185,15 +201,13 @@ def simplify_intersection_geoms(shp_path, short_lines_neighbours, graph):
     simplified_network.commitChanges()
     simplified_network.removeSelection()
 
-    return feat_to_del, feat_to_modify, ids_feat_copy
+    return simplified_network
 
 
 def clean_network(network, length_max_threshold, length_min_threshold,number_decimals):
     # make graph
     uri = network.dataProvider().dataSourceUri()
     path = os.path.dirname(uri) + "/" + QFileInfo(uri).baseName() + ".shp"
-
-    # TODO: update column id
 
     graph = read_shp_to_graph(path)
     snapped = snap_graph(graph, number_decimals)
@@ -236,15 +250,17 @@ def clean_network(network, length_max_threshold, length_min_threshold,number_dec
 
     feat_to_del = [x for k, combs in pairs_to_check.items() for x in combs]
 
-    triangles = []
-    for edge in edges:
-        for node in snapped.neighbors(edge[0]) + snapped.neighbors(edge[1]):
-            if (snapped.has_edge(edge[0],node) or snapped.has_edge(node,edge[0])) and (snapped.has_edge(edge[1],node) or snapped.has_edge(node, edge[1])):
-                triangles.append([edge[0],edge[1],node])
+    return feat_to_del
 
-    for triangle in triangles:
+    #triangles = []
+    #for edge in edges:
+    #    for node in snapped.neighbors(edge[0]) + snapped.neighbors(edge[1]):
+    #        if (snapped.has_edge(edge[0],node) or snapped.has_edge(node,edge[0])) and (snapped.has_edge(edge[1],node) or snapped.has_edge(node, edge[1])):
+    #            triangles.append([edge[0],edge[1],node])
+
+    #for triangle in triangles:
         # find edges
-        edges = [(triangle[0],triangle[1])]
+    #    edges = [(triangle[0],triangle[1])]
 
     #            ids =
     #            lengths =
