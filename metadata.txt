@@ -9,30 +9,37 @@
 [general]
 name=RcL Simplification
 qgisMinimumVersion=2.0
-description=This plugin simplifies a rcl map to segment map
-version=0.1
+description=This plugin simplifies a rcl map to segment map in preparation for angular segment analysis using Depthmap.
+version=0.0.1a
 author=Ioanna Kolovou
-email=ioanna.kolovou@gmail.com 
+email=I.Kolovou@spacesyntax.com
 
-about=This plugin simplifies a road centre line map to segment map in preparation for angular segment analysis using Depthmap.
+about=This is a plugin to simplify a road centre line map to a segment map in preparation for angular segment analysis using Depthmap or the Space Syntax Toolkit plugin in QGIS.
+      This plugin was developed by Space Syntax Open Digital Works (C) 2016 Space Syntax Ltd.
+      The input is a road centre line map (works with OSM and OS maps) and the output is a segment map optimised in terms of angular change and number of nodes in its dual graph representation.
+      The simplification process consists of two sequential steps according to the two tabs of the plugin:
+       1. Simplification of angle
+       2. Simplification of intersections
+       Depedencies: networkx
 
-tracker=https://github.com/Anafi/Simplification-processing.git
-repository=https://github.com/Anafi/Simplification-processing.git
+
+tracker=https://github.com/OpenDigitalWorks/Rcl-simplification-/issues
+repository=https://github.com/OpenDigitalWorks/Rcl-simplification-.git
 # End of mandatory metadata
 
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-# changelog=
+# changelog=0.0.1a first release
 
 # Tags are comma separated with spaces allowed
-tags=simplification, space syntax, road centre line map, segment map
+tags=simplification, space syntax, road centre line map
 
-homepage=https://github.com/Anafi/Simplification-processing.git
+homepage=https://github.com/OpenDigitalWorks
 category=Vector
 icon=icon.png
 # experimental flag
-experimental=True
+experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
