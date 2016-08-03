@@ -1,2 +1,7 @@
 .DS_Store
 .idea
+draft_functions.py
+dual_graph_to_shp.py
+graph_tools_1.py
+test_script_1.py
+test_script_2.py
