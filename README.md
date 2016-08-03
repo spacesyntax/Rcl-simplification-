@@ -10,7 +10,7 @@ he simplification consists of two processes, which are recommended to be made in
 1. Simplification of angle
 2. Simplification of intersections
 
-Dependencies: [networkx](installation: https://networkx.readthedocs.io/en/stable/install.html)
+Dependencies: [networkx](https://networkx.readthedocs.io/en/stable/install.html)
 
 ##**Simplification of angle**
 The simplification of angle converts a road centre line map to a segment map that has a simplified dual graph
@@ -18,12 +18,12 @@ representation with reduced number of nodes and reduced angular change between s
 
 The user has to specify the following parameters:
 
-- snap endpoints precision: Avoid disconnections between lines caused by different precisions in the number of decimals
+- **snap endpoints precision**: Avoid disconnections between lines caused by different precisions in the number of decimals
 of endpoint coordinates.
-- minimum segment length: A line  is removed if its length is below the minimum segment length parameter.
-- minimum angle deviation: Two lines become a straight line if the angle between them is below the minimum angle
+- **minimum segment length**: A line  is removed if its length is below the minimum segment length parameter.
+- **minimum angle deviation**: Two lines become a straight line if the angle between them is below the minimum angle
 deviation parameter.
-- maximum angle deviation: This parameter is to avoid converting multiple consecutive lines into one when the cumulative
+- **maximum angle deviation**: This parameter is to avoid converting multiple consecutive lines into one when the cumulative
 angular change is greater than the maximum angle deviation parameter.
 
 ##**Simplification of intersections**
@@ -31,12 +31,12 @@ The simplification of intersections converts complex intersections into a single
 and collapses all connected edges to that node.
 
 The user has to specify the following parameters:
-- snap endpoints precision: same as above
-- intersection distance: Endpoints  of multiple lines collapse in a single point (centroid) when the distance between
+- **snap endpoints precision**: same as above
+- **intersection distance**: Endpoints  of multiple lines collapse in a single point (centroid) when the distance between
 them is less than the specified intersection distance parameter .
-- minimum length deviation: The longest line of two lines that share the same endpoints is removed when their length
+- **minimum length deviation**: The longest line of two lines that share the same endpoints is removed when their length
 difference is less than the minimum length deviation parameter.
-- maximum length deviation: The longest line of a triangle of lines is removed when the length difference of it from the
+- **maximum length deviation**: The longest line of a triangle of lines is removed when the length difference of it from the
  sum of the length of the two other lines is less than the maximum length deviation parameter.
 
 ##**Installation**
