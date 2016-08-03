@@ -1,6 +1,6 @@
-**Rcl Simplification**
+#**Rcl Simplification**
 
-**About**
+##**About**
 This is a plug-in to simplify a road centre line map to a segment map in preparation for angular segment analysis using Depthmap or the Space Syntax Toolkit plug-in in QGIS.
 
 This plug-in was developed by Space Syntax Open Digital Works (C) 2016 Space Syntax Ltd.
@@ -12,7 +12,7 @@ he simplification consists of two processes, which are recommended to be made in
 
 Dependencies: [networkx](installation: https://networkx.readthedocs.io/en/stable/install.html)
 
-**Simplification of angle**
+##**Simplification of angle**
 The simplification of angle converts a road centre line map to a segment map that has a simplified dual graph
 representation with reduced number of nodes and reduced angular change between segments.
 
@@ -26,7 +26,7 @@ deviation parameter.
 - maximum angle deviation: This parameter is to avoid converting multiple consecutive lines into one when the cumulative
 angular change is greater than the maximum angle deviation parameter.
 
-**Simplification of intersections**
+##**Simplification of intersections**
 The simplification of intersections converts complex intersections into a single node in a primal graph representation
 and collapses all connected edges to that node.
 
@@ -39,15 +39,15 @@ difference is less than the minimum length deviation parameter.
 - maximum length deviation: The longest line of a triangle of lines is removed when the length difference of it from the
  sum of the length of the two other lines is less than the maximum length deviation parameter.
 
-**Installation**
+##**Installation**
 To use the plug-in download the zipped folder, unzip it and move the folder to the qgis plug-ins folder in your machine
 (/(User)/.qgis2/pyhton/plugins).
 
-**Notes**
+##**Notes**
 This plug-in is currently under development. Research and experimentation to define the best graph optimisation
 processes and to speed up simplification processing time is currently in progress.
 It has been tested with OSM and OS maps.
 
 
-**Software Requirements**
+##**Software Requirements**
 [QGIS](http://www.qgis.org/en/site/) (2.0 or above)
