@@ -26,7 +26,7 @@ import networkx as nx
 from qgis.core import *
 import itertools
 import math
-from graph_tools_1 import keep_decimals, read_shp_to_graph, snap_graph
+from graph_tools import keep_decimals, read_shp_to_graph, snap_graph
 from decimal import *
 from collections import defaultdict
 from PyQt4.QtCore import QVariant, QFileInfo
