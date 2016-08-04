@@ -208,16 +208,28 @@ class RclSimplification:
                 layer = i
         return layer
 
+    def giveWarningMessage(self, message):
+        # Gives warning according to message
+        self.iface.messageBar().pushMessage(
+            "Rcl simplification: ",
+            "%s" % (message),
+            level=QgsMessageBar.WARNING,
+            duration=5)
+
     def getSimplifyAngleSettings(self):
 
         settings_angle = {}
         settings_angle['network'] = self.getInput1()
-        # settings_angle['snapped'] = self.dlg.snapTickBox1.isChecked()
         settings_angle['decimal precision'] = self.dlg.getDecimals1()
         settings_angle['min seg length'] = self.dlg.getMinSegLen()
         settings_angle['min angle dev'] = self.dlg.getMinAngleDev()
         settings_angle['max angle dev'] = self.dlg.getMaxAngleDev()
         settings_angle['output1'] = self.dlg.getOutput1()
+
+        if settings_angle['network'].dataProvider().storageType == u'Memory storage':
+            self.giveWarningMessage("Input must not be a memory layer.Save the file to proceed!")
+        elif settings_angle['network'].crs().mapUnits() != 0:
+            self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
 
         return settings_angle
 
@@ -225,7 +237,6 @@ class RclSimplification:
 
         settings_inter= {}
         settings_inter['network'] = self.getInput2()
-        # settings_angle['snapped'] = self.dlg.snapTickBox1.isChecked()
         settings_inter['decimal precision'] = self.dlg.getDecimals2()
         settings_inter['intersection distance'] = self.dlg.getInterDist()
         settings_inter['min length dev'] = self.dlg.getMinLenDev()
@@ -233,7 +244,6 @@ class RclSimplification:
         settings_inter['output2'] = self.dlg.getOutput2()
 
         return settings_inter
-
 
     def simplifyAngle(self):
 
@@ -260,7 +270,7 @@ class RclSimplification:
 
         sa.simplify_angle(broken_network, settings_angle['min angle dev'], settings_angle['min seg length'], settings_angle['max angle dev'])
 
-        if settings_angle['output1'] is not None:
+        if len(settings_angle['output1'])>0:
             saved_shp = gt.save_shp(broken_network, settings_angle['output1'])
             QgsMapLayerRegistry.instance().removeMapLayer(broken_network.id())
             QgsMapLayerRegistry.instance().addMapLayer(saved_shp)
@@ -321,14 +331,18 @@ class RclSimplification:
 
         shp_path = gt.write_shp(simplified_network, input2_path)
         simplified_network_saved = QgsVectorLayer(shp_path, "simplified_network", "ogr")
-        gt.update_feat_id_col(simplified_network_saved, 'feat_id', start=0)
+        gt.update_feat_id_col(simplified_network_saved, 'feat_id', start=1)
         simplified_network_saved = QgsVectorLayer(shp_path, "simplified_network", "ogr")
 
-        feat_to_del = si.clean_network(simplified_network_saved, settings_inter['max length dev'], settings_inter['min length dev'], settings_inter['decimal precision'])
+        feat_to_del = si.clean_network(simplified_network_saved, settings_inter['max length dev'], settings_inter['min length dev'], n_decimals)
 
-        simplified_network.dataProvider().deleteFeatures(feat_to_del)
+        print feat_to_del
+        #simplified_network.startEditing()
+        #simplified_network.select(feat_to_del)
+        #simplified_network.deleteSelectedFeatures()
+        #simplified_network.commitChanges()
 
-        if settings_inter['output2'] is not None:
+        if len(settings_inter['output2'])>0:
             saved_shp = gt.save_shp(simplified_network, settings_inter['output2'])
             QgsMapLayerRegistry.instance().removeMapLayer(simplified_network.id())
             QgsMapLayerRegistry.instance().addMapLayer(saved_shp)
