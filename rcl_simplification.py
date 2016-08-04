@@ -27,7 +27,7 @@ import resources
 # Import the code for the dialog
 from rcl_simplification_dialog import RclSimplificationDialog
 import os.path
-import graph_tools_1 as gt
+import graph_tools as gt
 import simplify_angle as sa
 import simplify_intersections as si
 from qgis.utils import *
