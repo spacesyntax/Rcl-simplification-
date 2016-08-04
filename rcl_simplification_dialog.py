@@ -160,11 +160,3 @@ class RclSimplificationDialog(QtGui.QDialog, FORM_CLASS):
         self.minSegLenSpin.setValue(5)
         self.interDistSpin.setValue(5.5)
         self.close()
-
-
-
-
-
-
-
-
