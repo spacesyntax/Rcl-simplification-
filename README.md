@@ -55,7 +55,7 @@ typing '~/.qgis2/python/plugins/'.
 If you haven’t installed any QGIS plugins so far, you need to create the ‘plugins’ directory in
 the ‘.qgis2/python/’ directory.
 After copying the plugin, it will be available in the plugin manager window once you (re)start
-QGIS. Check the box next to the plugin to load it.”
+QGIS. Check the box next to the plugin to load it.
 
 ##**Notes**
 This plug-in is currently under development. Research and experimentation to define the best graph optimisation
