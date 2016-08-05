@@ -246,7 +246,7 @@ class RclSimplification:
 
         error_boolean = False
         if settings_angle['network'].dataProvider().storageType() == u'Memory storage':
-            self.giveWarningMessage("Input must not be a memory layer.Save the file to proceed!")
+            self.giveWarningMessage("Input must not be a memory layer. Save the file to proceed!")
             error_boolean = True
         if settings_angle['network'].crs().mapUnits() != 0:
             self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
@@ -290,7 +290,7 @@ class RclSimplification:
 
         error_boolean = False
         if settings_inter['network'].dataProvider().storageType() == u'Memory storage':
-            self.giveWarningMessage("Input must not be a memory layer.Save the file to proceed!")
+            self.giveWarningMessage("Input must not be a memory layer. Save the file to proceed!")
             error_boolean = True
         if settings_inter['network'].crs().mapUnits() != 0:
             self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
@@ -380,8 +380,9 @@ class RclSimplification:
     def getActiveLayers(self):
         layers_list = []
         for layer in self.iface.legendInterface().layers():
-            if layer.isValid() and (layer.wkbType() == 2 or layer.wkbType() == 5):
-                layers_list.append(layer.name())
+            if layer.isValid() and layer.type() == QgsMapLayer.VectorLayer:
+                if layer.hasGeometryType() and (layer.wkbType() == 2 or layer.wkbType() == 5):
+                    layers_list.append(layer.name())
         self.dlg.inputCombo1.clear()
         self.dlg.inputCombo2.clear()
         self.dlg.inputCombo1.addItems(layers_list)
