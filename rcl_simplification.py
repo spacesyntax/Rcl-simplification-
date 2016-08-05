@@ -248,9 +248,9 @@ class RclSimplification:
         if settings_angle['network'].dataProvider().storageType() == u'Memory storage':
             self.giveWarningMessage("Input must not be a memory layer.Save the file to proceed!")
             error_boolean = True
-        #if settings_angle['network'].crs().mapUnits() != 0:
-        #    self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
-        #    error_boolean = True
+        if settings_angle['network'].crs().mapUnits() != 0:
+            self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
+            error_boolean = True
 
         if not error_boolean:
             input1_uri = settings_angle['network'].dataProvider().dataSourceUri()
@@ -292,9 +292,9 @@ class RclSimplification:
         if settings_inter['network'].dataProvider().storageType() == u'Memory storage':
             self.giveWarningMessage("Input must not be a memory layer.Save the file to proceed!")
             error_boolean = True
-        #if settings_inter['network'].crs().mapUnits() != 0:
-        #    self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
-        #    error_boolean = True
+        if settings_inter['network'].crs().mapUnits() != 0:
+            self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
+            error_boolean = True
 
         if not error_boolean:
             input2_uri = settings_inter['network'].dataProvider().dataSourceUri()
