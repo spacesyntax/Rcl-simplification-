@@ -269,3 +269,120 @@ def clean_network(network, length_max_threshold, length_min_threshold,number_dec
     #    for each vertex w:
     #        if (v, w) is an edge and (w, u) is an edge:
     #            return true
+
+
+def clean_two_ends(network,distance_threshold):
+    D={}
+    for elem in network.getFeatures():
+        id=elem.id()
+        geom=elem.geometry()
+        len_=geom.length()
+        D[id]=[geom.asPolyline()[0],geom.asPolyline()[-1],len_]
+    two_ends=[]
+    for k,v in D.items():
+        id=k
+        p0=v[0]
+        p1=v[1]
+        l=v[2]
+        for i,j in D.items():
+            if k>i:
+                id_s=i
+                p0_s=j[0]
+                p1_s=j[1]
+                l_s=j[2]
+                #a condition for not having double pairs eg [a,b] and [b,a]
+                if p0==p0_s and p1==p1_s:
+                    #lines that will be paired should have approximately the same length
+                    if abs(l-l_s)<= distance_threshold:
+                        two_ends.append([id,id_s])
+                elif p0==p1_s and p1==p0_s:
+                    #lines that will be paired should have approximately the same length
+                    if abs(l-l_s)<= distance_threshold :
+                        two_ends.append([id,id_s])
+    #unless average angular change is very different
+    two_ends_to_del=[]
+    for i in two_ends:
+        two_ends_to_del.append(i[0])
+    return two_ends_to_del
+
+def clean_triangles(network,threshold_dif):
+    D={}
+    for i in network.getFeatures():
+        p0=i.geometry().asPolyline()[0]
+        p1=i.geometry().asPolyline()[-1]
+        len_=i.geometry().length()
+        D[i.id()]=[p0,p1,len_]
+    one_common=[]
+    for f in network.getFeatures():
+        f_p0=D[f.id()][0]
+        f_p1=D[f.id()][1]
+        f_len=D[f.id()][2]
+        for g in network.getFeatures():
+            if g.id()!=f.id():
+                g_p0=D[g.id()][0]
+                g_p1=D[g.id()][1]
+                g_len=D[g.id()][2]
+                if f_p0==g_p0 and not f_p1==g_p1:
+                    shortest=f
+                    longest=g
+                    shortest_endpoint=f_p1
+                    other_endpoint=f_p0
+                    if f_len>g_len:
+                        shortest=g
+                        longest=f
+                        shortest_endpoint=g_p1
+                        other_endpoint=g_p0
+                    one_common.append([shortest.id(),longest.id(),shortest_endpoint,other_endpoint])
+                elif f_p1==g_p1 and not f_p0==g_p0 :
+                    shortest=f
+                    longest=g
+                    shortest_endpoint=f_p0
+                    other_endpoint=f_p1
+                    if f_len>g_len:
+                        shortest=g
+                        longest=f
+                        shortest_endpoint=g_p0
+                        other_endpoint=g_p1
+                    one_common.append([shortest.id(),longest.id(),shortest_endpoint,other_endpoint])
+                elif f_p0==g_p1 and not f_p1==g_p0:
+                    shortest=f
+                    longest=g
+                    shortest_endpoint=f_p1
+                    other_endpoint=f_p0
+                    if f_len>g_len:
+                        shortest=g
+                        longest=f
+                        shortest_endpoint=g_p0
+                        other_endpoint=g_p1
+                    one_common.append([shortest.id(),longest.id(),shortest_endpoint,other_endpoint])
+                elif f_p1==g_p0 and not f_p0==g_p1:
+                    shortest=f
+                    longest=g
+                    shortest_endpoint=f_p0
+                    other_endpoint=f_p1
+                    if f_len>g_len:
+                        shortest=g
+                        longest=f
+                        shortest_endpoint=g_p1
+                        other_endpoint=g_p0
+                    one_common.append([shortest.id(),longest.id(),shortest_endpoint,other_endpoint])
+    triangles=[]
+    for i in one_common:
+        for j in one_common:
+            if i!=j:
+                if i[1]==j[1] and i[2]==j[2]:
+                    if not i[3]==j[3]:
+                #short, short,long, peak_point,long_p0,long_p1)
+                        triangles.append([i[0],j[0],j[1],i[2],D[j[1]][0],D[j[1]][1]])
+    triangles_reduced=[]
+    for i in triangles:
+        AOK=math.asin(abs(i[4][0]-i[3][0])/abs(math.hypot(abs(i[4][0]-i[3][0]),abs(i[4][1]-i[3][1]))))
+        BOL=math.asin(abs(i[5][0]-i[3][0])/abs(math.hypot(abs(i[5][0]-i[3][0]),abs(i[5][1]-i[3][1]))))
+        angle=math.degrees(AOK) + math.degrees(BOL)
+        if angle>120 and (D[i[0]][2]+D[i[1]][2])-D[i[2]][2]>0 and (D[i[0]][2]+D[i[1]][2])-D[i[2]][2]>0 <=threshold_dif:
+            if i not in triangles_reduced and i[0]>i[1]:
+                triangles_reduced.append([i[0],i[1],i[2]])
+    long_features=[]
+    for i in triangles_reduced:
+        long_features.append(i[2])
+    return long_features

@@ -20,7 +20,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, QFileInfo
 from PyQt4.QtGui import QAction, QIcon
 # Initialize Qt resources from file resources.py
 import resources
@@ -31,8 +31,8 @@ import graph_tools as gt
 import simplify_angle as sa
 import simplify_intersections as si
 from qgis.utils import *
-from PyQt4.QtCore import QVariant, QFileInfo
 from qgis.core import *
+from qgis.gui import QgsMessageBar
 
 # Import the debug library
 # set is_debug to False in release version
@@ -226,11 +226,6 @@ class RclSimplification:
         settings_angle['max angle dev'] = self.dlg.getMaxAngleDev()
         settings_angle['output1'] = self.dlg.getOutput1()
 
-        if settings_angle['network'].dataProvider().storageType == u'Memory storage':
-            self.giveWarningMessage("Input must not be a memory layer.Save the file to proceed!")
-        elif settings_angle['network'].crs().mapUnits() != 0:
-            self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
-
         return settings_angle
 
     def getSimplifyInterSettings(self):
@@ -248,105 +243,129 @@ class RclSimplification:
     def simplifyAngle(self):
 
         settings_angle = self.getSimplifyAngleSettings()
-        input1_uri = settings_angle['network'].dataProvider().dataSourceUri()
-        input1_path = os.path.dirname(input1_uri) + "/" + QFileInfo(input1_uri).baseName() + ".shp"
 
-        n_decimals = int(settings_angle['decimal precision'])
+        error_boolean = False
+        if settings_angle['network'].dataProvider().storageType() == u'Memory storage':
+            self.giveWarningMessage("Input must not be a memory layer.Save the file to proceed!")
+            error_boolean = True
+        #if settings_angle['network'].crs().mapUnits() != 0:
+        #    self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
+        #    error_boolean = True
 
-        network = QgsVectorLayer(input1_path,"network", "ogr")
-        gt.clean_cols(network)
+        if not error_boolean:
+            input1_uri = settings_angle['network'].dataProvider().dataSourceUri()
+            input1_path = os.path.dirname(input1_uri) + "/" + QFileInfo(input1_uri).baseName() + ".shp"
 
-        graph = gt.read_shp_to_graph(input1_path)
-        snapped = gt.snap_graph(graph, n_decimals)
+            n_decimals = int(settings_angle['decimal precision'])
 
-        dual_t = gt.graph_to_dual(snapped, 'feat_id', inter_to_inter=True)
-        sets = gt.merge_graph(dual_t)
-        merged_network, mg, snapped_merged = gt.merge_geometries(sets, input1_path, n_decimals)
+            network = QgsVectorLayer(input1_path,"network", "ogr")
+            gt.clean_cols(network)
 
-        inter_lines, f = gt.break_graph(snapped_merged, merged_network)
-        broken_network, lines_ind_to_break, snapped_graph_broken = gt.break_geometries(inter_lines, merged_network, snapped_merged,n_decimals)
+            graph = gt.read_shp_to_graph(input1_path)
+            snapped = gt.snap_graph(graph, n_decimals)
 
-        QgsMapLayerRegistry.instance().removeMapLayer(merged_network.id())
+            dual_t = gt.graph_to_dual(snapped, 'feat_id', inter_to_inter=True)
+            sets = gt.merge_graph(dual_t)
+            merged_network, mg, snapped_merged = gt.merge_geometries(sets, input1_path, n_decimals)
 
-        sa.simplify_angle(broken_network, settings_angle['min angle dev'], settings_angle['min seg length'], settings_angle['max angle dev'])
+            inter_lines, f = gt.break_graph(snapped_merged, merged_network)
+            broken_network, lines_ind_to_break, snapped_graph_broken = gt.break_geometries(inter_lines, merged_network, snapped_merged,n_decimals)
 
-        if len(settings_angle['output1'])>0:
-            saved_shp = gt.save_shp(broken_network, settings_angle['output1'])
-            QgsMapLayerRegistry.instance().removeMapLayer(broken_network.id())
-            QgsMapLayerRegistry.instance().addMapLayer(saved_shp)
+            QgsMapLayerRegistry.instance().removeMapLayer(merged_network.id())
 
+            sa.simplify_angle(broken_network, settings_angle['min angle dev'], settings_angle['min seg length'], settings_angle['max angle dev'])
+
+            if len(settings_angle['output1'])>0:
+                saved_shp = gt.save_shp(broken_network, settings_angle['output1'])
+                QgsMapLayerRegistry.instance().removeMapLayer(broken_network.id())
+                QgsMapLayerRegistry.instance().addMapLayer(saved_shp)
+
+            self.iface.messageBar().pushMessage(
+                "Rcl simplification: simplification process finished successfully!",
+                level=QgsMessageBar.INFO,
+                duration=5)
 
     def simplifyInter(self):
         settings_inter = self.getSimplifyInterSettings()
-        input2_uri = settings_inter['network'].dataProvider().dataSourceUri()
-        input2_path = os.path.dirname(input2_uri) + "/" + QFileInfo(input2_uri).baseName() + ".shp"
 
-        network = QgsVectorLayer(input2_path, "network", "ogr")
-        gt.clean_cols(network)
+        error_boolean = False
+        if settings_inter['network'].dataProvider().storageType() == u'Memory storage':
+            self.giveWarningMessage("Input must not be a memory layer.Save the file to proceed!")
+            error_boolean = True
+        #if settings_inter['network'].crs().mapUnits() != 0:
+        #    self.giveWarningMessage("Layer's map units are not meters. Map units must be meters!")
+        #    error_boolean = True
 
-        n_decimals = int(settings_inter['decimal precision'])
-        graph = gt.read_shp_to_graph(input2_path)
-        snapped = gt.snap_graph(graph, n_decimals)
+        if not error_boolean:
+            input2_uri = settings_inter['network'].dataProvider().dataSourceUri()
+            input2_path = os.path.dirname(input2_uri) + "/" + QFileInfo(input2_uri).baseName() + ".shp"
 
-        dual_t = gt.graph_to_dual(snapped, 'feat_id', inter_to_inter=True)
-        sets = gt.merge_graph(dual_t)
-        merged_network, mg, snapped_merged = gt.merge_geometries(sets, input2_path, n_decimals)
+            network = QgsVectorLayer(input2_path, "network", "ogr")
+            gt.clean_cols(network)
 
-        inter_lines, f = gt.break_graph(snapped_merged, merged_network)
-        broken_network, lines_ind_to_break, snapped_graph_broken = gt.break_geometries(inter_lines, merged_network,
-                                                                                       snapped_merged, n_decimals)
+            n_decimals = int(settings_inter['decimal precision'])
+            graph = gt.read_shp_to_graph(input2_path)
+            snapped = gt.snap_graph(graph, n_decimals)
 
-        shp_path = gt.write_shp(broken_network, input2_path)
+            dual_t = gt.graph_to_dual(snapped, 'feat_id', inter_to_inter=True)
+            sets = gt.merge_graph(dual_t)
+            merged_network, mg, snapped_merged = gt.merge_geometries(sets, input2_path, n_decimals)
 
-        QgsMapLayerRegistry.instance().removeMapLayer(broken_network.id())
+            inter_lines, f = gt.break_graph(snapped_merged, merged_network)
+            broken_network, lines_ind_to_break, snapped_graph_broken = gt.break_geometries(inter_lines, merged_network,
+                                                                                           snapped_merged, n_decimals)
 
-        broken_network = QgsVectorLayer(shp_path, "broken_network", "ogr")
-        gt.update_feat_id_col(broken_network, 'feat_id_3', start=0)
-        broken_network = QgsVectorLayer(shp_path, "broken_network", "ogr")
+            shp_path = gt.write_shp(broken_network, input2_path)
 
-        QgsMapLayerRegistry.instance().addMapLayer(broken_network)
+            QgsMapLayerRegistry.instance().removeMapLayer(broken_network.id())
 
-        graph = gt.read_shp_to_graph(shp_path)
-        snapped_graph_broken = gt.snap_graph(graph, 6)
-        l = si.get_nodes_coord(snapped_graph_broken)
-        points, point_ids_coords = si.make_points_from_shp(shp_path, l)
-        neighbors = si.find_closest_points(points)
+            broken_network = QgsVectorLayer(shp_path, "broken_network", "ogr")
+            gt.update_feat_id_col(broken_network, 'feat_id_3', start=0)
+            broken_network = QgsVectorLayer(shp_path, "broken_network", "ogr")
 
-        inter_distance_threshold = settings_inter['intersection distance']
+            QgsMapLayerRegistry.instance().addMapLayer(broken_network)
 
-        edge_list = si.find_not_connected_nodes(broken_network, snapped_graph_broken, neighbors, inter_distance_threshold,point_ids_coords)
-        snapped_graph_broken.add_edges_from(edge_list)
+            graph = gt.read_shp_to_graph(shp_path)
+            snapped_graph_broken = gt.snap_graph(graph, 6)
+            l = si.get_nodes_coord(snapped_graph_broken)
+            points, point_ids_coords = si.make_points_from_shp(shp_path, l)
+            neighbors = si.find_closest_points(points)
 
-        ids_short = si.find_short_edges(snapped_graph_broken, inter_distance_threshold)
+            inter_distance_threshold = settings_inter['intersection distance']
 
-        dual3 = gt.graph_to_dual(snapped_graph_broken, 'feat_id_3',inter_to_inter=False)  # short_edges_dual = dual3.subgraph(ids_short)
-        short_edges_dual = dual3.subgraph(ids_short)
-        short_lines_neighbours = si.find_connected_subgraphs(dual3, short_edges_dual)
-        h = short_lines_neighbours
-        short_lines_neighbours = {k: v for k, v in h.items() if len(v) != 0}
+            edge_list = si.find_not_connected_nodes(broken_network, snapped_graph_broken, neighbors, inter_distance_threshold,point_ids_coords)
+            snapped_graph_broken.add_edges_from(edge_list)
 
-        simplified_network = si.simplify_intersection_geoms(shp_path, short_lines_neighbours,snapped_graph_broken)
+            ids_short = si.find_short_edges(snapped_graph_broken, inter_distance_threshold)
 
-        QgsMapLayerRegistry.instance().removeMapLayers([points.id(),merged_network.id(),broken_network.id()])
+            dual3 = gt.graph_to_dual(snapped_graph_broken, 'feat_id_3',inter_to_inter=False)  # short_edges_dual = dual3.subgraph(ids_short)
+            short_edges_dual = dual3.subgraph(ids_short)
+            short_lines_neighbours = si.find_connected_subgraphs(dual3, short_edges_dual)
+            h = short_lines_neighbours
+            short_lines_neighbours = {k: v for k, v in h.items() if len(v) != 0}
 
-        shp_path = gt.write_shp(simplified_network, input2_path)
-        simplified_network_saved = QgsVectorLayer(shp_path, "simplified_network", "ogr")
-        gt.update_feat_id_col(simplified_network_saved, 'feat_id', start=1)
-        simplified_network_saved = QgsVectorLayer(shp_path, "simplified_network", "ogr")
+            simplified_network = si.simplify_intersection_geoms(shp_path, short_lines_neighbours,snapped_graph_broken)
 
-        feat_to_del = si.clean_network(simplified_network_saved, settings_inter['max length dev'], settings_inter['min length dev'], n_decimals)
+            QgsMapLayerRegistry.instance().removeMapLayers([points.id(),merged_network.id(),broken_network.id()])
 
-        print feat_to_del
-        #simplified_network.startEditing()
-        #simplified_network.select(feat_to_del)
-        #simplified_network.deleteSelectedFeatures()
-        #simplified_network.commitChanges()
+            feat_to_del = si.clean_two_ends(simplified_network,settings_inter['min length dev'])
 
-        if len(settings_inter['output2'])>0:
-            saved_shp = gt.save_shp(simplified_network, settings_inter['output2'])
-            QgsMapLayerRegistry.instance().removeMapLayer(simplified_network.id())
-            QgsMapLayerRegistry.instance().addMapLayer(saved_shp)
+            simplified_network.select(feat_to_del)
+            simplified_network.startEditing()
+            simplified_network.deleteSelectedFeatures()
+            simplified_network.commitChanges()
 
+            feat_to_del = si.clean_triangles(simplified_network, settings_inter['max length dev'])
+
+            simplified_network.select(feat_to_del)
+            simplified_network.startEditing()
+            simplified_network.deleteSelectedFeatures()
+            simplified_network.commitChanges()
+
+            self.iface.messageBar().pushMessage(
+                "Rcl simplification: simplification process finished successfully!",
+                level=QgsMessageBar.INFO,
+                duration=5)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -358,7 +377,6 @@ class RclSimplification:
         # remove the toolbar
         del self.toolbar
 
-
     def getActiveLayers(self):
         layers_list = []
         for layer in self.iface.legendInterface().layers():
@@ -369,7 +387,6 @@ class RclSimplification:
         self.dlg.inputCombo1.addItems(layers_list)
         self.dlg.inputCombo2.addItems(layers_list)
 
-
     def run(self):
         """Run method that performs all the real work"""
         # show the dialog
@@ -379,9 +396,6 @@ class RclSimplification:
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+
 
 

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>348</width>
+    <width>455</width>
     <height>434</height>
    </rect>
   </property>
@@ -23,7 +23,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -66,7 +66,7 @@
          <item row="6" column="0">
           <widget class="QLabel" name="label_46">
            <property name="text">
-            <string>angle deviation</string>
+            <string>angle between segments</string>
            </property>
           </widget>
          </item>
@@ -108,20 +108,6 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
-          <widget class="QLabel" name="label_47">
-           <property name="text">
-            <string>min</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="1">
-          <widget class="QLabel" name="label_44">
-           <property name="text">
-            <string>max</string>
-           </property>
-          </widget>
-         </item>
          <item row="12" column="2">
           <widget class="QPushButton" name="run1">
            <property name="layoutDirection">
@@ -160,6 +146,13 @@
            </property>
           </widget>
          </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>cumulative angle of continuous segments</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
@@ -185,13 +178,6 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
-          <widget class="QLabel" name="label_49">
-           <property name="text">
-            <string>min</string>
-           </property>
-          </widget>
-         </item>
          <item row="10" column="0" colspan="2">
           <widget class="QLineEdit" name="outputText2"/>
          </item>
@@ -212,7 +198,7 @@
          <item row="6" column="0">
           <widget class="QLabel" name="label_64">
            <property name="text">
-            <string>length deviation </string>
+            <string>length difference between two segments</string>
            </property>
           </widget>
          </item>
@@ -273,13 +259,6 @@
          <item row="1" column="0" colspan="3">
           <widget class="QComboBox" name="inputCombo2"/>
          </item>
-         <item row="7" column="1">
-          <widget class="QLabel" name="label_45">
-           <property name="text">
-            <string>max</string>
-           </property>
-          </widget>
-         </item>
          <item row="12" column="2">
           <widget class="QPushButton" name="run2">
            <property name="layoutDirection">
@@ -314,6 +293,13 @@
           <widget class="QLabel" name="label_67">
            <property name="text">
             <string>snap endpoints precision</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>length difference between three segments</string>
            </property>
           </widget>
          </item>
