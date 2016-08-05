@@ -57,6 +57,15 @@ the ‘.qgis2/python/’ directory.
 After copying the plugin, it will be available in the plugin manager window once you (re)start
 QGIS. Check the box next to the plugin to load it.
 
+##**Installation**
+To install networkx install first pip tools.
+If needed download https://bootstrap.pypa.io/get-pip.py
+Open OSGeo4W shell in windows or terminal in mac and go to the directory where the file was saved (type cd and the directory path)
+Then type 'python get-pip.py'. 
+To install networkx type pip install networkx
+To upgrade networkx type pip install networkx --upgrade.
+
+
 ##**Notes**
 This plug-in is currently under development. Research and experimentation to define the best graph optimisation
 processes and to speed up simplification processing time is currently in progress.
