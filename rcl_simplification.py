@@ -44,6 +44,15 @@ except ImportError, e:
     has_pydevd = False
     is_debug = False
 
+#change sys path to the included networkx package if not installed
+import sys
+import inspect
+try:
+    import networkx as nx
+except ImportError, e:
+    cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0],"external")))
+    if cmd_subfolder not in sys.path:
+        sys.path.insert(0, cmd_subfolder)
 
 class RclSimplification:
     """QGIS Plugin Implementation."""

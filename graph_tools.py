@@ -22,8 +22,8 @@
 """
 
 
-import networkx as nx
-from networkx import connected_components
+# import networkx as nx
+# from networkx import connected_components
 import itertools
 from decimal import *
 from qgis.core import *
@@ -31,6 +31,14 @@ from collections import Counter
 from itertools import izip as zip, count  # izip for maximum efficiency
 from PyQt4.QtCore import QVariant, QFileInfo
 import os.path
+
+# try to import installed networx, if not available use the one shipped with the esstoolkit
+try:
+    import networkx as nx
+    from networkx import connected_components
+    has_networkx = True
+except ImportError, e:
+    has_networkx = False
 
 
 # depthmap uses a precision of 6 decimals
