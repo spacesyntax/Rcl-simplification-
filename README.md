@@ -41,8 +41,22 @@ difference is less than the minimum length deviation parameter.
  sum of the length of the two other lines is less than the maximum length deviation parameter.
 
 ##**Installation**
-To use the plug-in download the zipped folder, unzip it and move the folder to the qgis plug-ins folder in your machine
-(/(User)/.qgis2/pyhton/plugins).
+Currently the plugin
+is not available through the QGIS plugins repository. To install you
+need to download the latest Plugin.zip file from the releases page (link). Unzip and copy
+the entire folder into the QGIS plugins directory.
+This directory can be found here:
+* MS Windows: C:\Users\(your user name)\.qgis2\python\plugins\
+* Mac OSX: Users/(your user name)/.qgis2/python/plugins/
+* Linux: home/(your user name)/.qgis2/python/plugins/
+
+This directory is usually hidden and you must make hidden files visible.
+Under Mac OSX you can open the folder in Finder by selecting 'Go > Go To Folder...' and
+typing '~/.qgis2/python/plugins/'.
+If you haven’t installed any QGIS plugins so far, you need to create the ‘plugins’ directory in
+the ‘.qgis2/python/’ directory.
+After copying the plugin, it will be available in the plugin manager window once you (re)start
+QGIS. Check the box next to the plugin to load it.”
 
 ##**Notes**
 This plug-in is currently under development. Research and experimentation to define the best graph optimisation
