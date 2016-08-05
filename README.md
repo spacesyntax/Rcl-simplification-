@@ -34,10 +34,10 @@ The user has to specify the following parameters:
 - **snap endpoints precision**: same as above
 - **intersection distance**: Endpoints  of multiple lines collapse in a single point (centroid) when the distance between
 them is less than the specified intersection distance parameter .
-- **minimum length deviation**: The longest line of two lines that share the same endpoints is removed when its length
+- **length difference between two segments**: The longest line of two lines that share the same endpoints is removed when its length
 is less x times the length of the other line
 difference is less than the minimum length deviation parameter.
-- **maximum length deviation**: The longest line of a triangle of lines is removed when the length difference of it from the
+- **length difference between three segments**: The longest line of a triangle of lines is removed when the length difference of it from the
  sum of the length of the two other lines is less than the maximum length deviation parameter.
 
 ##**Installation**
