@@ -46,8 +46,9 @@ try:
     import networkx as nx
     version = nx.__version__
     if version != '1.11' and external_subfolder not in sys.path:
-        del sys.modules['networkx']
+        #del sys.modules['networkx']
         sys.path.insert(0, external_subfolder)
+        #import networkx as nx
 except ImportError, e:
     if external_subfolder not in sys.path:
         sys.path.insert(0, external_subfolder)
