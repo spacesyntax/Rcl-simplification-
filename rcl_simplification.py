@@ -41,11 +41,12 @@ except ImportError, e:
 
 #change sys path to the included networkx package, if not installed
 import sys
-external_subfolder = os.path.abspath(os.path.join(os.path.dirname(__file__),"external"))
+external_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe() ))[0],"external")))
 try:
     import networkx as nx
     version = nx.__version__
-    if version != '1.11':
+    if version != '1.11' and external_subfolder not in sys.path:
+        del sys.modules['networkx']
         sys.path.insert(0, external_subfolder)
 except ImportError, e:
     if external_subfolder not in sys.path:
