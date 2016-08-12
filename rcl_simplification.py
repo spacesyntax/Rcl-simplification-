@@ -27,9 +27,6 @@ import resources
 # Import the code for the dialog
 from rcl_simplification_dialog import RclSimplificationDialog
 import os.path
-import graph_tools as gt
-import simplify_angle as sa
-import simplify_intersections as si
 from qgis.utils import *
 from qgis.core import *
 from qgis.gui import QgsMessageBar
@@ -53,6 +50,10 @@ except ImportError, e:
     cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0],"external")))
     if cmd_subfolder not in sys.path:
         sys.path.insert(0, cmd_subfolder)
+
+import graph_tools as gt
+import simplify_angle as sa
+import simplify_intersections as si
 
 class RclSimplification:
     """QGIS Plugin Implementation."""
