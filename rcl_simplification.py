@@ -24,8 +24,6 @@ from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVa
 from PyQt4.QtGui import QAction, QIcon
 # Initialize Qt resources from file resources.py
 import resources
-# Import the code for the dialog
-from rcl_simplification_dialog import RclSimplificationDialog
 import os.path
 from qgis.utils import *
 from qgis.core import *
@@ -41,19 +39,25 @@ except ImportError, e:
     has_pydevd = False
     is_debug = False
 
-#change sys path to the included networkx package if not installed
+#change sys path to the included networkx package, if not installed
 import sys
-import inspect
+external_subfolder = os.path.abspath(os.path.join(os.path.dirname(__file__),"external"))
 try:
     import networkx as nx
+    version = nx.__version__
+    if version != '1.11':
+        sys.path.insert(0, external_subfolder)
 except ImportError, e:
-    cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0],"external")))
-    if cmd_subfolder not in sys.path:
-        sys.path.insert(0, cmd_subfolder)
+    if external_subfolder not in sys.path:
+        sys.path.insert(0, external_subfolder)
 
+# Import the code for the dialog
+from rcl_simplification_dialog import RclSimplificationDialog
+# Import other modules
 import graph_tools as gt
 import simplify_angle as sa
 import simplify_intersections as si
+
 
 class RclSimplification:
     """QGIS Plugin Implementation."""
@@ -97,7 +101,6 @@ class RclSimplification:
         # Setup debugger
         if has_pydevd and is_debug:
             pydevd.settrace('localhost', port=53100, stdoutToServer=True, stderrToServer=True, suspend=True)
-
 
         # setup GUI signals
         self.dlg.run1.clicked.connect(self.simplifyAngle)
