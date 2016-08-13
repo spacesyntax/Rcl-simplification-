@@ -48,7 +48,7 @@ try:
     if version != '1.11' and external_subfolder not in sys.path:
         #del sys.modules['networkx']
         sys.path.insert(0, external_subfolder)
-        #import networkx as nx
+        #sys.modules['networkx'] = __import__('%s/networkx' % external_subfolder)
 except ImportError, e:
     if external_subfolder not in sys.path:
         sys.path.insert(0, external_subfolder)
