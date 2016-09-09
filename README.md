@@ -5,8 +5,8 @@ This is a plug-in to simplify a road centre line map to a segment map in prepara
 
 This plug-in was developed by Space Syntax Open Digital Works (C) 2016 Space Syntax Ltd.
 
-The plug-in takes as an input a road centre line map and produces a a segment map optimised in terms of angular change and number of nodes in its dual graph representation.
-he simplification consists of two processes, which are recommended to be made in the following sequence:
+The plug-in takes as an input a road centre line map and produces a segment map optimised in terms of angular change and number of nodes in its dual graph representation.
+The simplification consists of two processes, which are recommended to be made in the following sequence:
 1. Simplification of angle
 2. Simplification of intersections
 
