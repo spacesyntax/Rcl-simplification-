@@ -20,10 +20,9 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, QFileInfo
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QFileInfo
 from PyQt4.QtGui import QAction, QIcon
 # Initialize Qt resources from file resources.py
-import resources
 import os.path
 from qgis.utils import *
 from qgis.core import *
@@ -56,9 +55,9 @@ except ImportError, e:
 # Import the code for the dialog
 from rcl_simplification_dialog import RclSimplificationDialog
 # Import other modules
-import graph_tools as gt
-import simplify_angle as sa
-import simplify_intersections as si
+import old_algorithms.graph_tools as gt
+import old_algorithms.simplify_angle as sa
+from old_algorithms import simplify_intersections as si
 
 
 class RclSimplification:
