@@ -148,10 +148,10 @@ class sGraph(QObject):
                 connected_comp.append(tree_flat)
         return connected_comp
 
-    def get_lines_from_nodes(self,nodes):
+    def get_lines_from_nodes(self, nodes):
         lines = []
         for i in nodes:
-            lines.append(self.subadj_lines[i])
+            lines.append(self.adj_lines[i])
         lines = list(itertools.chain.from_iterable(lines))
         return list(set(lines))
 
