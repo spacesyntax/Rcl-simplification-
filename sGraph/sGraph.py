@@ -26,6 +26,9 @@ class sGraph(QObject):
         QObject.__init__(self)
         self.edges = edges
         self.edge_flds = [i.name() for i in self.edges[0].fields()]
+        self.edge_qflds = QgsFields()
+        for field in self.edges[0].fields():
+            self.edge_qflds.append(QgsField(field.name(), field.type()))
         self.n_edges = len(self.edges)
         self.source_col = source_col
         self.target_col = target_col
@@ -40,9 +43,6 @@ class sGraph(QObject):
         self.edge_geoms = {}
         self.edge_qgeoms = {}
 
-        # a dictionary to match simplified nodes with the input network nodes
-        # types: single, pseudonode, multinode, multiedge, bypassnode
-        # transformation: raw (None), updated, disregarded, collapsed, inserted
         self.superNodes = {}
 
         # create spatial index object
@@ -54,7 +54,7 @@ class sGraph(QObject):
             #f_count += 1
 
             attr = f.attributes()
-            self.edge_attrs[f.id()] = attr
+            self.edge_attrs[f.id()] = dict(zip(self.edge_flds,attr))
             self.edge_qgeoms[f.id()] = f.geometryAndOwnership()
             self.edge_geoms[f.id()] = f.geometry().exportToWkt()
 
@@ -90,6 +90,13 @@ class sGraph(QObject):
             except KeyError, e:
                 self.adj_lines[endnode] = [f.id()]
 
+            # TODO: decide if geometries and attributes and adj.lines can be stored here
+            # a dictionary to match simplified nodes with the input network nodes
+            # types: single, pseudonode, multinode, multiedge, bypassnode
+            # transformation: raw (None), updated, disregarded, collapsed, inserted
+            self.superNodes[f.id()] = {'node_type': 'single',
+                                       'from': None, 'class': None, 'edit_type': None, 'adj_lines': {}}
+
         self.nodes = list(set(self.nodes))
 
         # self loops are not included
@@ -116,48 +123,12 @@ class sGraph(QObject):
                     self.dual_edges[x[1]][x[0]] = angle
                 except KeyError, e:
                     self.dual_edges[x[1]] = {x[0]: angle}
+                self.superNodes[x[0]]['adj_lines'][x[1]] = angle
+                self.superNodes[x[1]]['adj_lines'][x[0]] = angle
 
-
-    def collapse_to_edge(self, groups):
-        x = 1
-        self.collapsed_dual_nodes = {type:'to_node'/'to_edge', }
-        for i in groups:
-            new_edge = 'dual' + str(x)
-            geom_collection = []
-
-
-
-            x += 1
-
-    def collapse_to_node(self, groups):
-        x = 1
-        self.collapsed_dual_nodes = {type:'to_node'/'to_edge'}
-        for i in groups:
-            new_edge = 'dual' + str(x)
-            geom_collection = []
-
-            x += 1
-
-    def insert_dual_edge(self, edge, angle):
-        try:
-            self.dual_edges[edge[0]][edge[1]] = angle
-        except KeyError, e:
-            self.dual_edges[edge[0]] = {edge[1]: angle}
-        return
-
-    def delete_dual_edge(self, edge):
-        del self.dual_edges[edge[0]]
-        self.updated_dual_edges
-        pass
-
-    def update_dual_edge(self):
-        # remove item from dictionary
-        self.delete_dual_edge()
-        self.insert_dual_edge()
-        pass
-
-    def delete_dual_node(self):
-        pass
+    # TODO: some of the centroids are not correct
+    def get_centroids_dict(self):
+        return {edge: pl_midpoint(edge_geom) for edge, edge_geom in self.edge_qgeoms.items()}
 
     def make_selection(self, attr, value):
         return [f for f in self.edges if f[attr] == value]
@@ -169,20 +140,26 @@ class sGraph(QObject):
         groups = {}
         ungrouped = []
         for l in lines:
-            if self.attributes[l][5] and not self.attributes[l][5].isspace():
+            if self.edge_attrs[l]['name1'] and not self.edge_attrs[l]['name1'].isspace():
                 try:
-                    groups[self.attributes[l][5]] += [l]
+                    groups[self.edge_attrs[l]['name1']] += [l]
                 except KeyError, e:
-                    groups[self.attributes[l][5]] = [l]
+                    groups[self.edge_attrs[l]['name1']] = [l]
             else:
-                if self.attributes[l][4] and not self.attributes[l][4].isspace():
+                if self.edge_attrs[l]['roadnumber'] and not self.edge_attrs[l]['roadnumber'].isspace():
                     try:
-                        groups[self.attributes[l][4]] += [l]
+                        groups[self.edge_attrs[l]['roadnumber']] += [l]
                     except KeyError, e:
-                        groups[self.attributes[l][4]] = [l]
+                        groups[self.edge_attrs[l]['roadnumber']] = [l]
                 else:
                     ungrouped += [l]
-        return groups, ungrouped
+        if len(ungrouped) > 0:
+            ungr = sGraph([f for f in self.edges if f.id() in ungrouped], self.source_col, self.target_col)
+            ungr_comp = ungr.find_connected_comp_full()
+            x = 1
+            for i in ungr_comp:
+                groups['ungrouped' + str(x)] = ungr.get_lines_from_nodes(i)
+        return groups
 
     def subgraph(self, attr, value, negative=False):
         if negative:
@@ -237,30 +214,99 @@ class sGraph(QObject):
         lines = list(itertools.chain.from_iterable(lines))
         return list(set(lines))
 
-    def get_internal_conn(self,lines):
-        pass
-
-    def get_external_conn(self,lines):
-        pass
-
-
     def simplify_dc(self):
+        # TODO: after sub-graphing & before finding the con_comp add lines that both of their endpoints are on dc.nodes
         dc = self.subgraph('formofway', 'Dual Carriageway', negative=False)
+        x = 1
         for comp in dc.find_connected_comp_full():
-            groups_by_names, ungrouped = self.group_by_name(self.get_lines_from_nodes(comp))
+            groups_by_names = dc.group_by_name(dc.get_lines_from_nodes(comp))
             for name, group in groups_by_names.items():
-                self.superNodes[group] = {'class': 'dual carriageway', 'from': group, 'type': 'multiedge'}
+                # TODO: filter from the other_con if a line connects to all lines in a group
+                # TODO: if yes then line becomes a bypass node
+                other_con = {}
+                for line in group:
+                    # get external connections
+                    for con_line, cost in self.superNodes[line]['adj_lines'].items():
+                        if con_line not in group:
+                            other_con[con_line] = cost
+                    # delete old group nodes
+                    del self.superNodes[line]
 
-                self.superEdges
-                # change dual graph
-                # delete old nodes
-                # delete old edges connections
                 # insert new dual node
+                self.superNodes['super'+str(x)] = {'node_type': 'multiedge', 'from': group, 'class': 'Dual Carriageway',
+                                                   'edit_type': 'collapsed_edges_to_line', 'adj_lines': other_con}
+
                 # update old - other to new other
+                for line in other_con.keys():
+                    old_nodes = [i for i in self.superNodes[line]['adj_lines'].keys() if i in group]
+                    for node in old_nodes:
+                        angle = self.superNodes[line]['adj_lines'][node]
+                        del self.superNodes[line]['adj_lines'][node]
+                        self.superNodes[line]['adj_lines']['super'+str(x)] = angle
+
+                # counter
+                x += 1
+
+        return
+
+    def simplify_rb(self):
+        rb = self.subgraph('formofway', 'Roundabout', negative=False)
+        x = 1
+        for comp in rb.find_connected_comp_full():
+            group = rb.get_lines_from_nodes(comp)
+            other_con = {}
+            for line in group:
+                # get external connections
+                for con_line, cost in self.superNodes[line]['adj_lines'].items():
+                    if con_line not in group:
+                        other_con[con_line] = cost
+                        # delete old group nodes
+                del self.superNodes[line]
+
+            # insert new dual node
+            self.superNodes['super' + str(x)] = {'node_type': 'multinode', 'from': group,
+                                                 'class': 'Roundabout',
+                                                 'edit_type': 'collapsed_edges_to_node', 'adj_lines': other_con}
+
+            # update other - other
+            # TODO: draw straight links between all other
+            # delete old - other
 
 
-                pass
+    def simplify_sl(self):
+        pass
 
+    def to_primal_features(self):
+        primal_features = []
+        for dl_node, info in self.superNodes.items():
+            if info['node_type'] == 'multiedge':
+                group = info['from']
+                geoms = [self.edge_geoms[line] for line in group]
+                line_segms = []
+                for line_wkt in geoms:
+                    line = QgsGeometry.fromWkt(line_wkt)
+                    # TODO: test if geom is valid in the new OS Open Road format
+                    if line.wkbType() == 2:
+                        line_segms.append([QgsPoint(i[0], i[1]) for i in line.asPolyline()])
+                    elif line.wkbType() == 5:
+                        for segm in line.asGeometryCollection():
+                            line_segms.append([QgsPoint(i[0], i[1]) for i in segm.asPolyline()])
+                ml_geom = QgsGeometry.fromMultiPolyline(line_segms)
+                new_feat = QgsFeature()
+                new_feat.setGeometry(ml_geom)
+                # TODO: attributes should be array of original attributes
+                # random selection of attributes
+                new_feat.setAttributes(self.edge_attrs[group[0]].values())
+                primal_features.append(new_feat)
+            else:
+                new_feat = QgsFeature()
+                new_feat.setGeometry(QgsGeometry.fromWkt(self.edge_geoms[dl_node]))
+                new_feat.setAttributes(self.edge_attrs[dl_node].values())
+                primal_features.append(new_feat)
+        return primal_features
+
+    def to_dual_features(self):
+        pass
 
     def createDbSublayer(self, dbname, user, host, port, password, schema, table_name, features):
         connstring = "dbname=%s user=%s host=%s port=%s password=%s" %(dbname, user, host, port, password)
@@ -283,3 +329,22 @@ class sGraph(QObject):
             con.close()
         except psycopg2.DatabaseError, e:
             print 'Error %s' % e
+
+    def to_shp(self, path, name, crs, encoding, geom_type, features):
+        if path is None:
+            network = QgsVectorLayer('LineString?crs=' + crs.toWkt(), name, "memory")
+        else:
+            file_writer = QgsVectorFileWriter(path, encoding, self.edge_qflds, geom_type,
+                                              crs, "ESRI Shapefile")
+            if file_writer.hasError() != QgsVectorFileWriter.NoError:
+                print "Error when creating shapefile: ", file_writer.errorMessage()
+            del file_writer
+            network = QgsVectorLayer(path, name, "ogr")
+        # QgsMapLayerRegistry.instance().addMapLayer(network)
+        pr = network.dataProvider()
+        network.startEditing()
+        if path is None:
+            pr.addAttributes(self.edge_qflds)
+        pr.addFeatures(features)
+        network.commitChanges()
+        return network

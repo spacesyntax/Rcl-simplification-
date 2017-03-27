@@ -18,3 +18,28 @@ def angle_3_points(inter_point, vertex1, vertex2):
     if cos_angle > 1:
         cos_angle = int(1)
     return math.degrees(math.acos(cos_angle))
+
+
+def mid(pt1, pt2):
+    x = (pt1.x() + pt2.x()) / 2
+    y = (pt1.y() + pt2.y()) / 2
+    return x, y
+
+
+def pl_midpoint(pl_geom):
+    vertices = pl_geom.asPolyline()
+    length = 0
+    mid_length = pl_geom.length() / 2
+    for ind, vertex in enumerate(vertices):
+        start_vertex = vertices[ind]
+        end_vertex = vertices[(ind + 1) % len(vertices)]
+        length += math.hypot(abs(start_vertex[0] - end_vertex[0]), abs(start_vertex[1] - end_vertex[1]))
+        ind_mid_before = ind
+        ind_mid_after = ind + 1
+        if length > mid_length:
+            midpoint = mid(vertices[ind_mid_before], vertices[ind_mid_after])
+            break
+        elif length == mid_length:
+            midpoint = vertices[ind_mid_after]
+            break
+    return midpoint
