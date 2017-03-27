@@ -32,10 +32,18 @@ class sGraph(QObject):
 
         self.topology = {}
         self.adj_lines = {}
+        self.dual_edges = {}
         # TODO: do not duplicate key if it already in attributes e.g. 'identifier'
 
+        self.nodes = []
         self.edge_attrs = {}
         self.edge_geoms = {}
+        self.edge_qgeoms = {}
+
+        # a dictionary to match simplified nodes with the input network nodes
+        # types: single, pseudonode, multinode, multiedge, bypassnode
+        # transformation: raw (None), updated, disregarded, collapsed, inserted
+        self.superNodes = {}
 
         # create spatial index object
         self.spIndex = QgsSpatialIndex()
@@ -47,7 +55,7 @@ class sGraph(QObject):
 
             attr = f.attributes()
             self.edge_attrs[f.id()] = attr
-            #self.edge_geoms[f.id()] = f.geometryAndOwnership()
+            self.edge_qgeoms[f.id()] = f.geometryAndOwnership()
             self.edge_geoms[f.id()] = f.geometry().exportToWkt()
 
             # insert features to index
@@ -71,6 +79,8 @@ class sGraph(QObject):
                 self.topology[endnode] += [startnode]
             except KeyError, e:
                 self.topology[endnode] = [startnode]
+            self.nodes.append(startnode)
+            self.nodes.append(endnode)
             try:
                 self.adj_lines[startnode] += [f.id()]
             except KeyError, e:
@@ -80,6 +90,75 @@ class sGraph(QObject):
             except KeyError, e:
                 self.adj_lines[endnode] = [f.id()]
 
+        self.nodes = list(set(self.nodes))
+
+        # self loops are not included
+        # orphans are not included
+        for node, edges in self.adj_lines.items():
+
+            #self.progress.emit(10 * f_count / feat_count)
+            #f_count += 1
+
+            for x in itertools.combinations(edges, 2):
+                inter_point = self.edge_qgeoms[x[0]].intersection(self.edge_qgeoms[x[1]])
+                vertex1 = self.edge_qgeoms[x[0]].asPolyline()[-2]
+                if inter_point.asPoint() == self.edge_qgeoms[x[0]].asPolyline()[0]:
+                    vertex1 = self.edge_qgeoms[x[0]].asPolyline()[1]
+                vertex2 = self.edge_qgeoms[x[1]].asPolyline()[-2]
+                if inter_point.asPoint() == self.edge_qgeoms[x[1]].asPolyline()[0]:
+                        vertex2 = self.edge_qgeoms[x[1]].asPolyline()[1]
+                angle = angle_3_points(inter_point, vertex1, vertex2)
+                try:
+                    self.dual_edges[x[0]][x[1]] = angle
+                except KeyError, e:
+                    self.dual_edges[x[0]] = {x[1]: angle}
+                try:
+                    self.dual_edges[x[1]][x[0]] = angle
+                except KeyError, e:
+                    self.dual_edges[x[1]] = {x[0]: angle}
+
+
+    def collapse_to_edge(self, groups):
+        x = 1
+        self.collapsed_dual_nodes = {type:'to_node'/'to_edge', }
+        for i in groups:
+            new_edge = 'dual' + str(x)
+            geom_collection = []
+
+
+
+            x += 1
+
+    def collapse_to_node(self, groups):
+        x = 1
+        self.collapsed_dual_nodes = {type:'to_node'/'to_edge'}
+        for i in groups:
+            new_edge = 'dual' + str(x)
+            geom_collection = []
+
+            x += 1
+
+    def insert_dual_edge(self, edge, angle):
+        try:
+            self.dual_edges[edge[0]][edge[1]] = angle
+        except KeyError, e:
+            self.dual_edges[edge[0]] = {edge[1]: angle}
+        return
+
+    def delete_dual_edge(self, edge):
+        del self.dual_edges[edge[0]]
+        self.updated_dual_edges
+        pass
+
+    def update_dual_edge(self):
+        # remove item from dictionary
+        self.delete_dual_edge()
+        self.insert_dual_edge()
+        pass
+
+    def delete_dual_node(self):
+        pass
+
     def make_selection(self, attr, value):
         return [f for f in self.edges if f[attr] == value]
 
@@ -87,7 +166,8 @@ class sGraph(QObject):
         return [f for f in self.edges if f[attr] != value]
 
     def group_by_name(self, lines):
-        groups = {'ungrouped': []}
+        groups = {}
+        ungrouped = []
         for l in lines:
             if self.attributes[l][5] and not self.attributes[l][5].isspace():
                 try:
@@ -101,8 +181,8 @@ class sGraph(QObject):
                     except KeyError, e:
                         groups[self.attributes[l][4]] = [l]
                 else:
-                    groups['ungrouped'] += [l]
-        return groups
+                    ungrouped += [l]
+        return groups, ungrouped
 
     def subgraph(self, attr, value, negative=False):
         if negative:
@@ -124,26 +204,28 @@ class sGraph(QObject):
         tree.append(subtree)
         return tree
 
-    def find_connected_comp(self):
-        # TODO: roundabouts do not have degree_1/ do it with nodes
-        ndegree_1 = list(set([n for n,neigh_n in self.topology.items() if len(neigh_n) == 1]))
-        ndegree_1_passed = []
+    def find_connected_comp_full(self):
+        # using degree 1 nodes does not get all connected components
+        # ndegree_1 = list(set([n for n,neigh_n in self.topology.items() if len(neigh_n) == 1]))
+        # ndegree_1_passed = []
+        nodes_passed = []
         connected_comp = []
-        for n in ndegree_1:
-            if n not in ndegree_1_passed:
+        for n in self.nodes:
+            if n not in nodes_passed:
                 tree = [[n]]
                 n_iter = 0
-                ndegree_1_passed.append(n)
+                nodes_passed.append(n)
                 while n_iter < 100:
                     last = tree[-1]
                     n_iter += 1
                     tree = self.get_next_vertices(tree)
-                    if tree[-1] == []:
+                    if last == []:
                         n_iter = 0
                         tree.remove([])
                         # print "hit end"
-                        ndegree_1_passed += [x for x in tree[-1]]
                         break
+                    else:
+                        nodes_passed += [x for x in tree[-1]]
                 tree_flat = list(itertools.chain.from_iterable(tree))
                 connected_comp.append(tree_flat)
         return connected_comp
@@ -154,6 +236,31 @@ class sGraph(QObject):
             lines.append(self.adj_lines[i])
         lines = list(itertools.chain.from_iterable(lines))
         return list(set(lines))
+
+    def get_internal_conn(self,lines):
+        pass
+
+    def get_external_conn(self,lines):
+        pass
+
+
+    def simplify_dc(self):
+        dc = self.subgraph('formofway', 'Dual Carriageway', negative=False)
+        for comp in dc.find_connected_comp_full():
+            groups_by_names, ungrouped = self.group_by_name(self.get_lines_from_nodes(comp))
+            for name, group in groups_by_names.items():
+                self.superNodes[group] = {'class': 'dual carriageway', 'from': group, 'type': 'multiedge'}
+
+                self.superEdges
+                # change dual graph
+                # delete old nodes
+                # delete old edges connections
+                # insert new dual node
+                # update old - other to new other
+
+
+                pass
+
 
     def createDbSublayer(self, dbname, user, host, port, password, schema, table_name, features):
         connstring = "dbname=%s user=%s host=%s port=%s password=%s" %(dbname, user, host, port, password)

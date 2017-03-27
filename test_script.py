@@ -27,9 +27,10 @@ port = 5432
 password = 'spaces01'
 schema = "simpl"
 table_name = "dual_carriageways"
-sg.createDbSublayer(dbname, user, host, port, password, schema, table_name, dual_cars)
+sg.createDbSublayer(dbname, user, host, port, password, schema, table_name, dc.edges)
 
-dc_comp = dc.find_connected_comp()
+dc_comp = dc.find_connected_comp_full()
+
 rb_comp = rb.find_connected_comp()
 
 lines = sg.get_lines_from_nodes(con_comp[-1])
@@ -60,37 +61,4 @@ lines = sg.get_lines_from_nodes(con_comp[-1])
 
 
 
-
-
-
-
-
-ndegree_1 = list(set([n for n,neigh_n in sg.subtopology.items() if len(neigh_n) == 1]))
-ndegree_1_passed = []
-connected_comp = []
-# for n in ndegree_1:
-
-n = ndegree_1[0]
-#    if n not in ndegree_1_passed:
-
-tree = [[n]]
-n_iter = 0
-ndegree_1_passed.append(n)
-while n_iter < 100:
-    last = tree[-1]
-    n_iter += 1
-    # TODO in con_1 or is self loop
-    #if last[0] in ndegree_1 and n_iter == 2:
-    #    ndegree_1_passed.append(last[0])
-        # print "no other line connected"
-    #    n_iter = 0
-    #    break
-    #else:
-    tree = get_next_vertices(tree)
-    if tree[-1] == []:
-        n_iter = 0
-        tree.remove([])
-        # print "hit end"
-        break
-connected_comp.append(tree)
 
