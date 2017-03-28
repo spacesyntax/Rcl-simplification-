@@ -1,5 +1,5 @@
 
-road_layer_name = 'road'
+road_layer_name = 'road_small'
 road_node_layer_name = 'roadnode'
 
 road_layer = getLayerByName(road_layer_name)

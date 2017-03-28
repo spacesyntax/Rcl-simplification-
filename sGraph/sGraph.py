@@ -214,39 +214,62 @@ class sGraph(QObject):
         lines = list(itertools.chain.from_iterable(lines))
         return list(set(lines))
 
+    def get_nodes_from_lines(self, lines):
+        nodes = []
+        for l in lines:
+            nodes.append(self.edge_attrs[l][self.source_col])
+            nodes.append(self.edge_attrs[l][self.target_col])
+        return list(set(nodes))
+
     def simplify_dc(self):
-        # TODO: after sub-graphing & before finding the con_comp add lines that both of their endpoints are on dc.nodes
         dc = self.subgraph('formofway', 'Dual Carriageway', negative=False)
+        # after sub-graphing & before finding the con_comp, add lines that both of their endpoints are on dc.nodes
         x = 1
+        old_nodes_to_del = []
+        old_nodes_updated = []
         for comp in dc.find_connected_comp_full():
-            groups_by_names = dc.group_by_name(dc.get_lines_from_nodes(comp))
+            # add bypass nodes (= nodes that both of their ends are connected to the dual carriageway component
+            dc_nodes = dc.get_lines_from_nodes(comp)
+            groups_by_names = self.group_by_name(dc_nodes)
             for name, group in groups_by_names.items():
-                # TODO: filter from the other_con if a line connects to all lines in a group
-                # TODO: if yes then line becomes a bypass node
-                other_con = {}
-                for line in group:
+                group_nodes = self.get_nodes_from_lines(group)
+                bypass_nodes = [f.id() for f in self.edges if
+                                f[self.source_col] in group_nodes and f[self.target_col] in group_nodes and f.id() not in group]
+                con_nodes = {}
+                for line in group + bypass_nodes:
                     # get external connections
                     for con_line, cost in self.superNodes[line]['adj_lines'].items():
-                        if con_line not in group:
-                            other_con[con_line] = cost
+                        if con_line not in group and con_line not in bypass_nodes:
+                            con_nodes[con_line] = cost
                     # delete old group nodes
-                    del self.superNodes[line]
+                    old_nodes_to_del.append(line)
+                    # del self.superNodes[line]
 
                 # insert new dual node
                 self.superNodes['super'+str(x)] = {'node_type': 'multiedge', 'from': group, 'class': 'Dual Carriageway',
-                                                   'edit_type': 'collapsed_edges_to_line', 'adj_lines': other_con}
+                                                   'edit_type': 'collapsed_edges_to_line', 'adj_lines': con_nodes,
+                                                   'bypasses': bypass_nodes}
 
                 # update old - other to new other
-                for line in other_con.keys():
-                    old_nodes = [i for i in self.superNodes[line]['adj_lines'].keys() if i in group]
+                for line in con_nodes.keys():
+                    old_nodes = [i for i in self.superNodes[line]['adj_lines'].keys() if i in group + bypass_nodes]
                     for node in old_nodes:
                         angle = self.superNodes[line]['adj_lines'][node]
-                        del self.superNodes[line]['adj_lines'][node]
+                        old_nodes_updated.append([line,node])
+                        # del self.superNodes[line]['adj_lines'][node]
                         self.superNodes[line]['adj_lines']['super'+str(x)] = angle
 
                 # counter
                 x += 1
 
+        for item in old_nodes_updated:
+            try:
+                del self.superNodes[item[0]]['adj_lines'][item[1]]
+            except KeyError, e:
+                continue
+
+        for node in list(set(old_nodes_to_del)):
+            del self.superNodes[node]
         return
 
     def simplify_rb(self):
@@ -254,19 +277,19 @@ class sGraph(QObject):
         x = 1
         for comp in rb.find_connected_comp_full():
             group = rb.get_lines_from_nodes(comp)
-            other_con = {}
+            con_nodes = {}
             for line in group:
                 # get external connections
                 for con_line, cost in self.superNodes[line]['adj_lines'].items():
                     if con_line not in group:
-                        other_con[con_line] = cost
+                        con_nodes[con_line] = cost
                         # delete old group nodes
                 del self.superNodes[line]
 
             # insert new dual node
             self.superNodes['super' + str(x)] = {'node_type': 'multinode', 'from': group,
                                                  'class': 'Roundabout',
-                                                 'edit_type': 'collapsed_edges_to_node', 'adj_lines': other_con}
+                                                 'edit_type': 'collapsed_edges_to_node', 'adj_lines': con_nodes}
 
             # update other - other
             # TODO: draw straight links between all other
