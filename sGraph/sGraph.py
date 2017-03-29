@@ -15,13 +15,6 @@ class sGraph(QObject):
     progress = pyqtSignal(float)
     warning = pyqtSignal(str)
 
-    # TODO: check if nodes need to be added (nodes, node_key)
-    # self.nodes = nodes
-    # self.node_key = node_key
-    # self.n_nodes = len(self.nodes)
-    # self.node_flds = [i.name() for i in self.nodes[0]]
-    # self.node_attrs = {f[node_key]: f.attributes() for f in self.nodes}
-
     def __init__(self, edges, source_col='default', target_col='default'):
         QObject.__init__(self)
         self.edges = edges
@@ -44,6 +37,7 @@ class sGraph(QObject):
         self.edge_qgeoms = {}
 
         self.superNodes = {}
+        self.superEdges = {}
 
         # create spatial index object
         self.spIndex = QgsSpatialIndex()
@@ -94,8 +88,7 @@ class sGraph(QObject):
             # a dictionary to match simplified nodes with the input network nodes
             # types: single, pseudonode, multinode, multiedge, bypassnode
             # transformation: raw (None), updated, disregarded, collapsed, inserted
-            self.superNodes[f.id()] = {'node_type': 'single',
-                                       'from': None, 'class': None, 'edit_type': None, 'adj_lines': {}}
+            self.superNodes[f.id()] = {'type': 'node', 'ancestors': None, 'class': None}
 
         self.nodes = list(set(self.nodes))
 
@@ -123,8 +116,7 @@ class sGraph(QObject):
                     self.dual_edges[x[1]][x[0]] = angle
                 except KeyError, e:
                     self.dual_edges[x[1]] = {x[0]: angle}
-                self.superNodes[x[0]]['adj_lines'][x[1]] = angle
-                self.superNodes[x[1]]['adj_lines'][x[0]] = angle
+                self.superEdges[(x[0],x[1])] = angle
 
     # TODO: some of the centroids are not correct
     def get_centroids_dict(self):
@@ -222,17 +214,18 @@ class sGraph(QObject):
         return list(set(nodes))
 
     def simplify_dc(self):
+        # subgraph from main where formofway = Dual Carriageway
         dc = self.subgraph('formofway', 'Dual Carriageway', negative=False)
-        # after sub-graphing & before finding the con_comp, add lines that both of their endpoints are on dc.nodes
         x = 1
         old_nodes_to_del = []
         old_nodes_updated = []
+
         for comp in dc.find_connected_comp_full():
             # add bypass nodes (= nodes that both of their ends are connected to the dual carriageway component
             dc_nodes = dc.get_lines_from_nodes(comp)
             groups_by_names = self.group_by_name(dc_nodes)
-            for name, group in groups_by_names.items():
-                group_nodes = self.get_nodes_from_lines(group)
+            for name, group_nodes in groups_by_names.items():
+
                 bypass_nodes = [f.id() for f in self.edges if
                                 f[self.source_col] in group_nodes and f[self.target_col] in group_nodes and f.id() not in group]
                 con_nodes = {}
