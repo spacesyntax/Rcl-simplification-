@@ -1,6 +1,7 @@
 
 import math
 
+
 def angle_3_points(inter_point, vertex1, vertex2):
     inter_vertex1 = math.hypot(abs(inter_point.asPoint()[0] - vertex1[0]),
                                abs(inter_point.asPoint()[1] - vertex1[1]))
@@ -18,6 +19,23 @@ def angle_3_points(inter_point, vertex1, vertex2):
     if cos_angle > 1:
         cos_angle = int(1)
     return math.degrees(math.acos(cos_angle))
+
+
+# TODO
+def angle_4_points(line1, line2):
+    pass
+
+
+# TODO test
+def pl_angle(pl_geom):
+    pl = pl_geom.asPolyline()
+    totAngle = 0
+    for indx, vertex in enumerate(pl_geom.asPolyline()[2:]):
+        vertex1 = pl[indx]
+        inter_point = QgsGeometry.fromPoint(QgsPoint(pl[indx + 1][0], pl[indx + 1][1]))
+        vertex2 = pl[indx + 2]
+        totAngle += angle_3_points(inter_point, vertex1, vertex2)
+    return totAngle
 
 
 def mid(pt1, pt2):

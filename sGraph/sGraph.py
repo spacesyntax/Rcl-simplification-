@@ -29,12 +29,14 @@ class sGraph(QObject):
         self.topology = {}
         self.adj_lines = {}
         self.dual_edges = {}
-        # TODO: do not duplicate key if it already in attributes e.g. 'identifier'
+        # TODO: do not duplicate key if it is already in attributes e.g. 'identifier'
 
         self.nodes = []
         self.edge_attrs = {}
         self.edge_geoms = {}
         self.edge_qgeoms = {}
+        # TODO: add total angular change of polyline
+        self.edge_totAngle = {}
 
         self.superNodes = {}
         self.superEdges = {}
@@ -51,7 +53,7 @@ class sGraph(QObject):
             self.edge_attrs[f.id()] = dict(zip(self.edge_flds,attr))
             self.edge_qgeoms[f.id()] = f.geometryAndOwnership()
             self.edge_geoms[f.id()] = f.geometry().exportToWkt()
-
+            self.edge_totAngle[f.id()] = pl_angle(f.geometry())
             # insert features to index
             self.spIndex.insertFeature(f)
 
@@ -86,8 +88,7 @@ class sGraph(QObject):
 
             # TODO: decide if geometries and attributes and adj.lines can be stored here
             # a dictionary to match simplified nodes with the input network nodes
-            # types: single, pseudonode, multinode, multiedge, bypassnode
-            # transformation: raw (None), updated, disregarded, collapsed, inserted
+            # types: node, pseudonode, multinode, multiedge, bypassnode
             self.superNodes[f.id()] = {'type': 'node', 'ancestors': None, 'class': None}
 
         self.nodes = list(set(self.nodes))
@@ -227,9 +228,10 @@ class sGraph(QObject):
             for name, group_nodes in groups_by_names.items():
 
                 bypass_nodes = [f.id() for f in self.edges if
-                                f[self.source_col] in group_nodes and f[self.target_col] in group_nodes and f.id() not in group]
+                                f[self.source_col] in group_nodes and f[self.target_col] in group_nodes and f.id() not in group_nodes]
+
                 con_nodes = {}
-                for line in group + bypass_nodes:
+                for line in group_nodes + bypass_nodes:
                     # get external connections
                     for con_line, cost in self.superNodes[line]['adj_lines'].items():
                         if con_line not in group and con_line not in bypass_nodes:
