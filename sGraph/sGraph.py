@@ -35,7 +35,7 @@ class sGraph(QObject):
         self.edge_attrs = {}
         self.edge_geoms = {}
         self.edge_qgeoms = {}
-        # TODO: add total angular change of polyline
+        # angular change of polyline
         self.edge_totAngle = {}
 
         self.superNodes = {}
@@ -66,7 +66,6 @@ class sGraph(QObject):
                 endnode = f.geometry().asPolyline()[-1]
             else:
                 endnode = f[self.target_col]
-
             try:
                 self.topology[startnode] += [endnode]
             except KeyError, e:
@@ -86,10 +85,8 @@ class sGraph(QObject):
             except KeyError, e:
                 self.adj_lines[endnode] = [f.id()]
 
-            # TODO: decide if geometries and attributes and adj.lines can be stored here
-            # a dictionary to match simplified nodes with the input network nodes
             # types: node, pseudonode, multinode, multiedge, bypassnode
-            self.superNodes[f.id()] = {'type': 'node', 'ancestors': None, 'class': None}
+            self.superNodes[f.id()] = {'type': 'node', 'ancestors': [f.id()], 'class': None}
 
         self.nodes = list(set(self.nodes))
 
@@ -108,16 +105,10 @@ class sGraph(QObject):
                 vertex2 = self.edge_qgeoms[x[1]].asPolyline()[-2]
                 if inter_point.asPoint() == self.edge_qgeoms[x[1]].asPolyline()[0]:
                         vertex2 = self.edge_qgeoms[x[1]].asPolyline()[1]
-                angle = angle_3_points(inter_point, vertex1, vertex2)
-                try:
-                    self.dual_edges[x[0]][x[1]] = angle
-                except KeyError, e:
-                    self.dual_edges[x[0]] = {x[1]: angle}
-                try:
-                    self.dual_edges[x[1]][x[0]] = angle
-                except KeyError, e:
-                    self.dual_edges[x[1]] = {x[0]: angle}
-                self.superEdges[(x[0],x[1])] = angle
+                angle = int(angle_3_points(inter_point, vertex1, vertex2))
+                self.superEdges[(x[0], x[1])] = 180 - angle
+
+        self.dual_edges = self.superEdges
 
     # TODO: some of the centroids are not correct
     def get_centroids_dict(self):
@@ -214,57 +205,91 @@ class sGraph(QObject):
             nodes.append(self.edge_attrs[l][self.target_col])
         return list(set(nodes))
 
-    def simplify_dc(self):
+    def simplify_dc(self, roadnodes):
         # subgraph from main where formofway = Dual Carriageway
         dc = self.subgraph('formofway', 'Dual Carriageway', negative=False)
-        x = 1
-        old_nodes_to_del = []
-        old_nodes_updated = []
+
+        # counter
+        count = 1
 
         for comp in dc.find_connected_comp_full():
-            # add bypass nodes (= nodes that both of their ends are connected to the dual carriageway component
-            dc_nodes = dc.get_lines_from_nodes(comp)
-            groups_by_names = self.group_by_name(dc_nodes)
-            for name, group_nodes in groups_by_names.items():
+            # add bypass nodes (= nodes that both of their ends are connected to the dual carriageway component)
+            # TODO instead of bypass nodes add function to close a linestring. (e.g. Park Lane)
+            dc_dl_nodes = dc.get_lines_from_nodes(comp)
+            groups_by_names = self.group_by_name(dc_dl_nodes)
+            for name, group_dl_nds in groups_by_names.items():
 
-                bypass_nodes = [f.id() for f in self.edges if
-                                f[self.source_col] in group_nodes and f[self.target_col] in group_nodes and f.id() not in group_nodes]
+                group_pr_nds = self.get_nodes_from_lines(group_dl_nds)
 
-                con_nodes = {}
-                for line in group_nodes + bypass_nodes:
+                bypass_dl_nds = [f.id() for f in self.edges if f[self.source_col] in group_pr_nds
+                                 and f[self.target_col] in group_pr_nds
+                                 and f.id() not in group_dl_nds]
+
+                all_pr_nds = self.get_nodes_from_lines(group_dl_nds + bypass_dl_nds)
+
+                con_dl_nds = []
+                for node in all_pr_nds:
                     # get external connections
-                    for con_line, cost in self.superNodes[line]['adj_lines'].items():
-                        if con_line not in group and con_line not in bypass_nodes:
-                            con_nodes[con_line] = cost
-                    # delete old group nodes
-                    old_nodes_to_del.append(line)
-                    # del self.superNodes[line]
+                    con = self.adj_lines[node]
+                    con_dl_nds += [line for line in con if line not in group_dl_nds + bypass_dl_nds]
 
-                # insert new dual node
-                self.superNodes['super'+str(x)] = {'node_type': 'multiedge', 'from': group, 'class': 'Dual Carriageway',
-                                                   'edit_type': 'collapsed_edges_to_line', 'adj_lines': con_nodes,
-                                                   'bypasses': bypass_nodes}
+                new_dl_edges = [x for x in itertools.combinations(con_dl_nds, 2)]
+                # exclude if two edges are already connected (this can be where linestring not closed)
+                excl_dl_edges = []
+                for new_edge in new_dl_edges:
+                    cost = self.dual_edges.get(new_edge, None)
+                    cost_rev = self.dual_edges.get((new_edge[1], new_edge[0]), None)
+                    if not(cost is None and cost_rev is None):
+                        excl_dl_edges.append(new_edge)
+                for edge in excl_dl_edges:
+                    new_dl_edges.remove(edge)
 
-                # update old - other to new other
-                for line in con_nodes.keys():
-                    old_nodes = [i for i in self.superNodes[line]['adj_lines'].keys() if i in group + bypass_nodes]
-                    for node in old_nodes:
-                        angle = self.superNodes[line]['adj_lines'][node]
-                        old_nodes_updated.append([line,node])
-                        # del self.superNodes[line]['adj_lines'][node]
-                        self.superNodes[line]['adj_lines']['super'+str(x)] = angle
+                # delete old nodes and insert new dual **multi-edge** node
+                for i in group_dl_nds + bypass_dl_nds:
+                    # node might have already been deleted (eg bypass node)
+                    try:
+                        del self.superNodes[i]
+                    except KeyError, e:
+                        continue
+                self.superNodes['s_' + str(count)] = {'type': 'multiedge', 'class': 'Dual Carriageway', 'ancestors': group_dl_nds + bypass_dl_nds}
+                # TODO: add topological dual graph edges
+                for edge in new_dl_edges:
+                    dl_nd_1 = edge[0]
+                    dl_nd_2 = edge[1]
+                    dl_nd_1_end = self.edge_attrs[dl_nd_1][self.source_col]
+                    if dl_nd_1_end not in all_pr_nds:
+                        dl_nd_1_end = self.edge_attrs[dl_nd_1][self.target_col]
+                    dl_nd_2_end = self.edge_attrs[dl_nd_2][self.source_col]
+                    if dl_nd_2_end not in all_pr_nds:
+                        dl_nd_2_end = self.edge_attrs[dl_nd_2][self.target_col]
+                    dl_nd_1_end_idx = (QgsGeometry.fromWkt(self.edge_geoms[dl_nd_1]).asPolyline()).index(roadnodes[dl_nd_1_end].asPoint())
+                    dl_nd_2_end_idx = (QgsGeometry.fromWkt(self.edge_geoms[dl_nd_2]).asPolyline()).index(roadnodes[dl_nd_2_end].asPoint())
+
+                    dl_nd_1_bef_end = 1
+                    if dl_nd_1_end_idx != 0:
+                        dl_nd_1_bef_end = dl_nd_1_end_idx - 1
+
+                    dl_nd_2_bef_end = 1
+                    if dl_nd_2_end_idx != 0:
+                        dl_nd_2_bef_end = dl_nd_2_end_idx - 1
+
+                    angle1 = angle_3_points(roadnodes[dl_nd_1_end], (QgsGeometry.fromWkt(self.edge_geoms[dl_nd_1])).asPolyline()[dl_nd_1_bef_end], roadnodes[dl_nd_2_end].asPoint())
+                    angle2 = angle_3_points(roadnodes[dl_nd_2_end], (QgsGeometry.fromWkt(self.edge_geoms[dl_nd_2])).asPolyline()[dl_nd_2_bef_end], roadnodes[dl_nd_1_end].asPoint())
+                    self.superEdges[(dl_nd_1, 's_' + str(count))] = 180 - angle1
+                    self.superEdges[('s_' + str(count), dl_nd_2)] = 180 - angle2
 
                 # counter
-                x += 1
+                count += 1
 
-        for item in old_nodes_updated:
-            try:
-                del self.superNodes[item[0]]['adj_lines'][item[1]]
-            except KeyError, e:
-                continue
 
-        for node in list(set(old_nodes_to_del)):
-            del self.superNodes[node]
+        # TODO: del all dual graph edges that include the group_dl_nds, bypass_dl_nds
+        # this it is best to be done in the end so that you loop through once
+        all_collapsed_dl_nds = [node for node, info in self.superNodes.items() if info['type'] == 'multiedge']
+        dl_edges_to_del = [dl_edge for dl_edge, cost in self.dual_edges.items() if dl_edge[0] in all_collapsed_dl_nds or dl_edge[1] in all_collapsed_dl_nds]
+
+        for i in dl_edges_to_del:
+            del self.superEdges[i]
+
         return
 
     def simplify_rb(self):
@@ -297,8 +322,8 @@ class sGraph(QObject):
     def to_primal_features(self):
         primal_features = []
         for dl_node, info in self.superNodes.items():
-            if info['node_type'] == 'multiedge':
-                group = info['from']
+            if info['type'] == 'multiedge':
+                group = info['ancestors']
                 geoms = [self.edge_geoms[line] for line in group]
                 line_segms = []
                 for line_wkt in geoms:

@@ -11,17 +11,12 @@ node_attrs = [QgsField(i.name(), i.type()) for i in road_node_layer.dataProvider
 
 # load os road layer and its topology
 edges = [edge for edge in road_layer.getFeatures()]
+
 sg = sGraph(edges, source_col='startnode', target_col='endnode')
 
-# subgraph dual carriageways
-#dc = sg.subgraph('formofway', 'Dual Carriageway', negative=False)
-# subgraph roundabouts
-#rb = sg.subgraph('formofway', 'Roundabout', negative=False)
-# subgraph sliproads
-#sl = sg.subgraph('formofway', 'Slip Road', negative=False)
-
 # simplify dual carriageways
-sg.simplify_dc()
+roadnodes = {node['identifier']: QgsGeometry.fromPoint(QgsPoint(node.geometry().asPoint()[0], node.geometry().asPoint()[1])) for node in road_node_layer.getFeatures()}
+sg.simplify_dc(roadnodes)
 
 # simplify roundabouts
 
