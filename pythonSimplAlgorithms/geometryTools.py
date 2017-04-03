@@ -1,12 +1,12 @@
 
 import math
 
-# TODO: inter_point is QgsPoint -> convert to coordinates
+
 def angle_3_points(inter_point, vertex1, vertex2):
-    inter_vertex1 = math.hypot(abs(inter_point.asPoint()[0] - vertex1[0]),
-                               abs(inter_point.asPoint()[1] - vertex1[1]))
-    inter_vertex2 = math.hypot(abs(inter_point.asPoint()[0] - vertex2[0]),
-                               abs(inter_point.asPoint()[1] - vertex2[1]))
+    inter_vertex1 = math.hypot(abs(inter_point[0] - vertex1[0]),
+                               abs(inter_point[1] - vertex1[1]))
+    inter_vertex2 = math.hypot(abs(inter_point[0] - vertex2[0]),
+                               abs(inter_point[1] - vertex2[1]))
     vertex1_2 = math.hypot(abs(vertex1[0] - vertex2[0]), abs(vertex1[1] - vertex2[1]))
     A = ((inter_vertex1 ** 2) + (inter_vertex2 ** 2) - (vertex1_2 ** 2))
     B = (2 * inter_vertex1 * inter_vertex2)
@@ -20,12 +20,13 @@ def angle_3_points(inter_point, vertex1, vertex2):
         cos_angle = int(1)
     return math.degrees(math.acos(cos_angle))
 
+
 def pl_angle(pl_geom):
     pl = pl_geom.asPolyline()
     totAngle = 0
     for indx, vertex in enumerate(pl_geom.asPolyline()[2:]):
         vertex1 = pl[indx]
-        inter_point = QgsGeometry.fromPoint(QgsPoint(pl[indx + 1][0], pl[indx + 1][1]))
+        inter_point = pl[indx + 1]
         vertex2 = pl[indx + 2]
         totAngle += angle_3_points(inter_point, vertex1, vertex2)
     return totAngle
@@ -54,3 +55,9 @@ def pl_midpoint(pl_geom):
             midpoint = vertices[ind_mid_after]
             break
     return midpoint
+
+
+def get_vertices(pl_geom):
+    # precondition: all geometries should be polylines
+    for i in pl_geom.asPolyline():
+        yield (i[0], i[1])

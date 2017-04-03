@@ -1,6 +1,10 @@
+# imports
+execfile(u'/Users/joe/Rcl-simplification-/sGraph/sGraph.py'.encode('utf-8'))
+execfile(u'/Users/joe/Rcl-simplification-/pythonSimplAlgorithms/geometryTools.py'.encode('utf-8'))
+execfile(u'/Users/joe/Rcl-simplification-/sGraph/utilityFunctions.py'.encode('utf-8'))
 
-road_layer_name = 'road_small'
-road_node_layer_name = 'roadnode'
+road_layer_name = 'road'
+road_node_layer_name = 'road_node'
 
 road_layer = getLayerByName(road_layer_name)
 road_node_layer = getLayerByName(road_node_layer_name)
@@ -15,8 +19,7 @@ edges = [edge for edge in road_layer.getFeatures()]
 sg = sGraph(edges, source_col='startnode', target_col='endnode')
 
 # simplify dual carriageways
-roadnodes = {node['identifier']: QgsGeometry.fromPoint(QgsPoint(node.geometry().asPoint()[0], node.geometry().asPoint()[1])) for node in road_node_layer.getFeatures()}
-sg.simplify_dc(roadnodes)
+sg.simplify_dc()
 
 # simplify roundabouts
 
@@ -30,8 +33,15 @@ name = 'simplified'
 
 # simplified primal graph to shp
 nf = sg.to_primal_features()
-ml_layer = sg.to_shp(path, name, crs, encoding, geom_type, nf)
+ml_layer = sg.to_shp(path, name, crs, encoding, geom_type, nf, graph='primal')
 QgsMapLayerRegistry.instance().addMapLayer(ml_layer)
+
+name = 'simplified_dual'
+df = sg.to_dual_features()
+md_layer = sg.to_shp(path, name, crs, encoding, geom_type, df, graph='dual')
+QgsMapLayerRegistry.instance().addMapLayer(md_layer)
+
+
 
 # simplified dual graph to shp
 
