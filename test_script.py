@@ -4,14 +4,14 @@ execfile(u'/Users/joe/Rcl-simplification-/pythonSimplAlgorithms/geometryTools.py
 execfile(u'/Users/joe/Rcl-simplification-/sGraph/utilityFunctions.py'.encode('utf-8'))
 
 road_layer_name = 'road'
-road_node_layer_name = 'road_node'
+#road_node_layer_name = 'road_node'
 
 road_layer = getLayerByName(road_layer_name)
-road_node_layer = getLayerByName(road_node_layer_name)
+#road_node_layer = getLayerByName(road_node_layer_name)
 
 # get fields
 edge_attrs = [QgsField(i.name(), i.type()) for i in road_layer.dataProvider().fields()]
-node_attrs = [QgsField(i.name(), i.type()) for i in road_node_layer.dataProvider().fields()]
+#node_attrs = [QgsField(i.name(), i.type()) for i in road_node_layer.dataProvider().fields()]
 
 # load os road layer and its topology
 edges = [edge for edge in road_layer.getFeatures()]
