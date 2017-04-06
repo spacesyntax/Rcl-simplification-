@@ -241,6 +241,17 @@ class sGraph(QObject):
                 external_lines.append(l)
         return internal_lines, external_lines
 
+    def get_lines_from_nodes_ordered(self, ordered_nodes):
+        lines = []
+        for ind,node in enumerate(ordered_nodes[:-1]):
+            first = node
+            second = ordered_nodes[ind+1]
+            candidate_lines1 = self.adj_lines[first]
+            candidate_lines2 = self.adj_lines[second]
+            line = [x for x in candidate_lines1 if x in candidate_lines2]
+        lines.append(line[0])
+        return lines
+
     def get_nodes_from_lines(self, lines):
         nodes = []
         for l in lines:
@@ -374,39 +385,72 @@ class sGraph(QObject):
 
         return
 
-
     def group_dc(self):
 
         # subgraph from main where formofway = Dual Carriageway
-        dc = self.subgraph('formofway', 'Dual Carriageway', negative=False)
+        dc_w_o_bypass = self.subgraph('formofway', 'Dual Carriageway', negative=False)
+        # add bypass nodes (= nodes that both of their ends are connected to the dual carriageway component)
+        dc_nodes = dc_w_o_bypass.nodes
+        dc = self.subgraph2(dc_nodes)
 
-        # counter
-        count = 1
+        groups = []
 
         for dc_pr_nodes in dc.find_connected_comp_full():
-            # TODO instead of bypass nodes add function to close a linestring. (e.g. Park Lane)
+            dc_dl_nodes = dc.get_lines_from_nodes(dc_pr_nodes)
 
-            dc_dl_nodes = dc.get_lines_from_nodes(comp)
-
-            # filter nodes w connectivity 1
-            # if 0 then linestring is closed
+            # filter nodes w connectivity 1, if 0 then linestring is closed
             dc_pr_nodes_con0 = [node for node in dc_pr_nodes if len(dc.topology[node]) == 1]
+            dc_pr_nodes_between = [node for node in dc_pr_nodes if node not in dc_pr_nodes_con0]
 
-            # if more than two dc_pr_nodes_con0
-            # make all possible combinations and find shortest paths (w - o dc)
-
-            x = 0
-            for link in itertools.combinations(dc_pr_nodes_con0, 2):
+            # if more than two dc_pr_nodes_con0, make all possible combinations and find shortest paths (w - o dc)
+            links = []
+            for (start, end) in itertools.combinations(dc_pr_nodes_con0, 2):
                 # find shortest path
-                while x < 10:
+                paths = [[start]]
+                x = 0
+                link = None
+                while link is None and x < 10:
+                    paths = self.make_tree(paths, dc_pr_nodes_between)
+                    for path in paths:
+                        last_visited = path[-1]
+                        if last_visited == end:
+                            print "found path to close linestring"
+                            link = path
+                            links.append(link)
                     x += 1
-                    con_nodes = for i in
+
+            if len(links) > 0:
+                link_dl_nodes = []
+                for link in links:
+                    link_dl_nodes += self.get_lines_from_nodes_ordered(link)
+                groups.append([dc_dl_nodes + link_dl_nodes])
+                # bypass_dl_nodes = [ x for x in self.get_lines_from_nodes(dc_pr_nodes) if x not in dc_dl_nodes + link_dl_nodes
+
+        return groups
+
+    def find_cicles(self):
+        # find cicles for every con_comp
+        # if two cicles of the same con_comp share an edge join them
+        pass
 
 
+    def make_tree(self, paths, dc_pr_nodes_between):
+        new_paths = []
+        for path in paths:
+            if len(path) < 10:
+                last_visited = path[-1]
+                con_nodes = [node for node in self.topology[last_visited] if node not in dc_pr_nodes_between and node not in path]
+                new_path = list(path)
+                new_path.append(con_nodes)
+                for p in self.generate_paths(new_path):
+                    new_paths.append(p)
+        return new_paths
 
-
-
-
+    def generate_paths(self, tree_list):
+        last = tree_list[-1]
+        path = tree_list[:-1]
+        for x in last:
+            yield path + [x]
 
     def simplify_rb(self):
         pass
