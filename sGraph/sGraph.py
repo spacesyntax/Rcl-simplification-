@@ -374,6 +374,40 @@ class sGraph(QObject):
 
         return
 
+
+    def group_dc(self):
+
+        # subgraph from main where formofway = Dual Carriageway
+        dc = self.subgraph('formofway', 'Dual Carriageway', negative=False)
+
+        # counter
+        count = 1
+
+        for dc_pr_nodes in dc.find_connected_comp_full():
+            # TODO instead of bypass nodes add function to close a linestring. (e.g. Park Lane)
+
+            dc_dl_nodes = dc.get_lines_from_nodes(comp)
+
+            # filter nodes w connectivity 1
+            # if 0 then linestring is closed
+            dc_pr_nodes_con0 = [node for node in dc_pr_nodes if len(dc.topology[node]) == 1]
+
+            # if more than two dc_pr_nodes_con0
+            # make all possible combinations and find shortest paths (w - o dc)
+
+            x = 0
+            for link in itertools.combinations(dc_pr_nodes_con0, 2):
+                # find shortest path
+                while x < 10:
+                    x += 1
+                    con_nodes = for i in
+
+
+
+
+
+
+
     def simplify_rb(self):
         pass
 
