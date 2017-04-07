@@ -104,6 +104,7 @@ class sGraph(QObject):
                                        'attrs': attrs}
 
         self.nodes = list(set(self.nodes))
+        self.edge_ends = {(v['source'], v['target']): k for k, v in self.edge_geoms.items()}
 
         # self loops are not included
         # orphans are not included
@@ -166,7 +167,7 @@ class sGraph(QObject):
             filtered_edges = self.make_selection(attr, value)
         return sGraph(filtered_edges, self.source_col, self.target_col)
 
-    def subgraph2(self, nodes):
+    def subgraph_n(self, nodes):
         filtered_edges = []
         set_nodes = set(nodes)
         for f in self.edges:
@@ -175,11 +176,17 @@ class sGraph(QObject):
                 filtered_edges.append(f)
         return sGraph(filtered_edges, self.source_col, self.target_col)
 
+    def subgraph_e(self, f_edges, input_edges):
+        filtered_edges = []
+        for fid in f_edges:
+            filtered_edges.append(input_edges[fid])
+        return sGraph(filtered_edges, self.source_col, self.target_col)
+
     def get_next_vertex(self, tree):
         last = tree[-1]
         return tree + [i for i in self.topology[last] if i not in tree]
 
-    def get_next_vertices(self,tree):
+    def get_next_vertices(self, tree):
         last = tree[-1]
         subtree = []
         tree_flatten = list(itertools.chain.from_iterable(tree))
@@ -243,13 +250,17 @@ class sGraph(QObject):
 
     def get_lines_from_nodes_ordered(self, ordered_nodes):
         lines = []
-        for ind,node in enumerate(ordered_nodes[:-1]):
+        for ind, node in enumerate(ordered_nodes[:-1]):
             first = node
             second = ordered_nodes[ind+1]
-            candidate_lines1 = self.adj_lines[first]
-            candidate_lines2 = self.adj_lines[second]
-            line = [x for x in candidate_lines1 if x in candidate_lines2]
-        lines.append(line[0])
+            try:
+                lines.append(self.edge_ends[(first, second)])
+            except KeyError, e:
+                pass
+            try:
+                lines.append(self.edge_ends[(second, first)])
+            except KeyError, e:
+                pass
         return lines
 
     def get_nodes_from_lines(self, lines):
@@ -265,7 +276,7 @@ class sGraph(QObject):
         dc_w_o_bypass = self.subgraph('formofway', 'Dual Carriageway', negative=False)
         dc_nodes = dc_w_o_bypass.nodes
         # include bypass nodes (= nodes that both of their ends are connected to the dual carriageway component)
-        dc = self.subgraph2(dc_nodes)
+        dc = self.subgraph_n(dc_nodes)
 
         # counter
         count = 1
@@ -385,65 +396,93 @@ class sGraph(QObject):
 
         return
 
-    def group_dc(self):
+    def group_dc(self, input_edges):
 
         # subgraph from main where formofway = Dual Carriageway
         dc_w_o_bypass = self.subgraph('formofway', 'Dual Carriageway', negative=False)
         # add bypass nodes (= nodes that both of their ends are connected to the dual carriageway component)
         dc_nodes = dc_w_o_bypass.nodes
-        dc = self.subgraph2(dc_nodes)
+        dc = self.subgraph_n(dc_nodes)
+        dc_edges = [f.id() for f in dc.edges]
+        dc_neg_edges = list(set([f.id() for f in self.edges]).difference(set(dc_edges)))
+
+        # make negative sub-graph of dc
+        dc_neg = self.subgraph_e(dc_neg_edges, input_edges)
 
         groups = []
+
+        # if closing a dc_comp involves joining w other dc_comp
+        dc_comp_collapsed = []
+
+        all_added_linestings = []
 
         for dc_pr_nodes in dc.find_connected_comp_full():
             dc_dl_nodes = dc.get_lines_from_nodes(dc_pr_nodes)
 
             # filter nodes w connectivity 1, if 0 then linestring is closed
             dc_pr_nodes_con0 = [node for node in dc_pr_nodes if len(dc.topology[node]) == 1]
-            dc_pr_nodes_between = [node for node in dc_pr_nodes if node not in dc_pr_nodes_con0]
+            # dc_pr_nodes_between = [node for node in dc_pr_nodes if node not in dc_pr_nodes_con0]
 
-            # if more than two dc_pr_nodes_con0, make all possible combinations and find shortest paths (w - o dc)
+            # close linestring
+            # for every node with con_1 make tree until you hit any node in dc_pr_nodes
             links = []
-            for (start, end) in itertools.combinations(dc_pr_nodes_con0, 2):
+
+            for node in dc_pr_nodes_con0:
                 # find shortest path
-                paths = [[start]]
+                paths = [[node]]
                 x = 0
                 link = None
-                while link is None and x < 10:
-                    paths = self.make_tree(paths, dc_pr_nodes_between)
+                while link is None and x < 50:
+                    paths = self.make_tree(paths, dc_neg)
                     for path in paths:
-                        last_visited = path[-1]
-                        if last_visited == end:
-                            print "found path to close linestring"
+                        last = path[-1]
+                        if last in dc_pr_nodes:
+                            #print "found path to close linestring"
                             link = path
                             links.append(link)
                     x += 1
 
             if len(links) > 0:
+                # filter links
                 link_dl_nodes = []
+                #for link in links:
+                #    link_dl_nodes += self.get_lines_from_nodes_ordered(link)
+                # groups.append([dc_dl_nodes + link_dl_nodes])
                 for link in links:
-                    link_dl_nodes += self.get_lines_from_nodes_ordered(link)
-                groups.append([dc_dl_nodes + link_dl_nodes])
-                # bypass_dl_nodes = [ x for x in self.get_lines_from_nodes(dc_pr_nodes) if x not in dc_dl_nodes + link_dl_nodes
+                    link_dl_nodes += dc_neg.get_lines_from_nodes_ordered(link)
+                    for l in link_dl_nodes:
+                        all_added_linestings.append(l)
 
-        return groups
+        all_added_linestings = list(set(all_added_linestings))
+        return self.subgraph_e(all_added_linestings, input_edges) #groups
 
     def find_cicles(self):
         # find cicles for every con_comp
+
+        # subgraph dc_dl_nodes, link_dl_nodes & find connected components
+        # for every con_comp find cicles
+
         # if two cicles of the same con_comp share an edge join them
+
+        # TODO: make dual and filter backward links
+
         pass
 
-
-    def make_tree(self, paths, dc_pr_nodes_between):
+    def make_tree(self, paths, dc_neg):
         new_paths = []
         for path in paths:
-            if len(path) < 10:
+            if len(path) < 20:
                 last_visited = path[-1]
-                con_nodes = [node for node in self.topology[last_visited] if node not in dc_pr_nodes_between and node not in path]
-                new_path = list(path)
-                new_path.append(con_nodes)
-                for p in self.generate_paths(new_path):
-                    new_paths.append(p)
+                # TODO: lines need to be broken at common intersections before as there are topological errors
+                try:
+                    con_nodes = [node for node in dc_neg.topology[last_visited] if node not in path]
+                    # and if self.edge_attrs[node]['formofway'] != 'Collapsed Dual Carriageway'
+                    new_path = list(path)
+                    new_path.append(con_nodes)
+                    for p in self.generate_paths(new_path):
+                        new_paths.append(p)
+                except KeyError, e:
+                    pass
         return new_paths
 
     def generate_paths(self, tree_list):
